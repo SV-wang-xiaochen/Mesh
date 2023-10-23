@@ -7,6 +7,9 @@ import os
 
 LeftEyeFront = 4051
 LeftEyeRear = 4346
+Head = 3558
+Nose = 3526
+Jaw = 3400
 
 def rotation_matrix_from_vectors(vec1, vec2):
     """ Find the rotation matrix that aligns vec1 to vec2
@@ -66,9 +69,9 @@ def main():
         meshNr2 = random.randint(0, len(list))
 
     print("Destination mesh:")
-    print(meshNr1, os.path.basename(list[meshNr1]))
+    print(meshNr1, os.path.basename(list[meshNr1]), '\n')
     print("Source mesh:")
-    print(meshNr2, os.path.basename(list[meshNr2]))
+    print(meshNr2, os.path.basename(list[meshNr2]), '\n')
 
     mesh1 = o3d.io.read_triangle_mesh(list[meshNr1])
     # print(mesh1.vertices[LeftEyeFront])
@@ -84,35 +87,39 @@ def main():
     eyeAxis1 = mesh1.vertices[LeftEyeFront] - mesh1.vertices[LeftEyeRear]
     eyeAxis2 = mesh2.vertices[LeftEyeFront] - mesh2.vertices[LeftEyeRear]
 
-    print(f"Before transformation, the angle in degree between two eye axes: {angle_between_two_vectors(eyeAxis1,eyeAxis2)}")
+    print(f"Before rotation and translation, the angle in degree between two eye axes: {angle_between_two_vectors(eyeAxis1,eyeAxis2)}\n")
 
     R = rotation_matrix_from_vectors(eyeAxis2, eyeAxis1)
     Rotation = np.eye(4)
     Rotation[:3, :3] = R
 
     # T =  np.matmul(np.eye(4), Translation)
-    mesh2 = copy.deepcopy(mesh2).transform(Rotation)
+    mesh2_R = copy.deepcopy(mesh2).transform(Rotation)
 
-    trans = mesh1.vertices[LeftEyeFront] - mesh2.vertices[LeftEyeFront]
+    print("Before translation, two LeftEyeFront points:")
+    print(f"Mesh1: {mesh1.vertices[LeftEyeFront]}")
+    print(f"Mesh2: {mesh2.vertices[LeftEyeFront]}\n")
+
+    trans = mesh1.vertices[LeftEyeFront] - mesh2_R.vertices[LeftEyeFront]
     Translation = np.eye(4)
     Translation[0, 3] = trans[0]
     Translation[1, 3] = trans[1]
     Translation[2, 3] = trans[2]
 
-    mesh2 = copy.deepcopy(mesh2).transform(Translation)
+    mesh2_R_T = copy.deepcopy(mesh2_R).transform(Translation)
+
+    print("After translation, two LeftEyeFront points:")
+    print(f"Mesh1: {mesh1.vertices[LeftEyeFront]}")
+    print(f"Mesh2: {mesh2_R_T.vertices[LeftEyeFront]}\n")
 
     mesh1.paint_uniform_color([1, 0, 0])
-    mesh2.paint_uniform_color([0, 1, 0])
-    o3d.visualization.draw_geometries([mesh1, mesh2], mesh_show_wireframe=True)
+    o3d.visualization.draw_geometries([mesh1, mesh2_R_T], mesh_show_wireframe=True)
 
     eyeAxis1 = mesh1.vertices[LeftEyeFront] - mesh1.vertices[LeftEyeRear]
-    eyeAxis2 = mesh2.vertices[LeftEyeFront] - mesh2.vertices[LeftEyeRear]
+    eyeAxis2 = mesh2_R_T.vertices[LeftEyeFront] - mesh2_R_T.vertices[LeftEyeRear]
 
-    print(f"After transformation, the angle in degree between two eye axes: {angle_between_two_vectors(eyeAxis1,eyeAxis2)}")
+    print(f"After rotation and translation, the angle in degree between two eye axes: {angle_between_two_vectors(eyeAxis1,eyeAxis2)}\n")
 
-    print("Check if coordinates of two LeftEyeFront points are identical:")
-    print(f"Mesh1: {mesh1.vertices[LeftEyeFront]}")
-    print(f"Mesh2: {mesh2.vertices[LeftEyeFront]}")
 
 if __name__ == "__main__":
     main()
