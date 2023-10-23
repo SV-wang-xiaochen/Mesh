@@ -81,12 +81,12 @@ def main():
     # point_cloud2 = mesh2.sample_points_poisson_disk(number_of_points=10000)
     # Visualize the point cloud
 
-    line1 = mesh1.vertices[LeftEyeFront] - mesh1.vertices[LeftEyeRear]
-    line2 = mesh2.vertices[LeftEyeFront] - mesh2.vertices[LeftEyeRear]
+    eyeAxis1 = mesh1.vertices[LeftEyeFront] - mesh1.vertices[LeftEyeRear]
+    eyeAxis2 = mesh2.vertices[LeftEyeFront] - mesh2.vertices[LeftEyeRear]
 
-    print(f"before transformation, the angle in degree between two lines: {angle_between_two_vectors(line1,line2)}")
+    print(f"Before transformation, the angle in degree between two eye axes: {angle_between_two_vectors(eyeAxis1,eyeAxis2)}")
 
-    R = rotation_matrix_from_vectors(line2, line1)
+    R = rotation_matrix_from_vectors(eyeAxis2, eyeAxis1)
     Rotation = np.eye(4)
     Rotation[:3, :3] = R
 
@@ -105,14 +105,14 @@ def main():
     mesh2.paint_uniform_color([0, 1, 0])
     o3d.visualization.draw_geometries([mesh1, mesh2], mesh_show_wireframe=True)
 
-    line1 = mesh1.vertices[LeftEyeFront] - mesh1.vertices[LeftEyeRear]
-    line2 = mesh2.vertices[LeftEyeFront] - mesh2.vertices[LeftEyeRear]
+    eyeAxis1 = mesh1.vertices[LeftEyeFront] - mesh1.vertices[LeftEyeRear]
+    eyeAxis2 = mesh2.vertices[LeftEyeFront] - mesh2.vertices[LeftEyeRear]
 
-    print(f"after transformation, the angle in degree between two lines: {angle_between_two_vectors(line1,line2)}")
+    print(f"After transformation, the angle in degree between two eye axes: {angle_between_two_vectors(eyeAxis1,eyeAxis2)}")
 
-    print("check if coords of LeftEyeFront are identical:")
-    print(f"mesh1: {mesh1.vertices[LeftEyeFront]}")
-    print(f"mesh2: {mesh2.vertices[LeftEyeFront]}")
+    print("Check if coordinates of two LeftEyeFront points are identical:")
+    print(f"Mesh1: {mesh1.vertices[LeftEyeFront]}")
+    print(f"Mesh2: {mesh2.vertices[LeftEyeFront]}")
 
 if __name__ == "__main__":
     main()
