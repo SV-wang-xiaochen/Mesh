@@ -5,11 +5,13 @@ import glob
 import random
 import os
 
-LeftEyeFront = 4051
-LeftEyeRear = 4346
-Head = 3558
-Nose = 3526
-Jaw = 3400
+LeftEyeFront = 4043
+LeftEyeRear = 4463
+RightEyeFront = 4587
+Head = 1726
+Nose = 2825
+Jaw = 3584
+
 
 def rotation_matrix_from_vectors(vec1, vec2):
     """ Find the rotation matrix that aligns vec1 to vec2
@@ -19,14 +21,15 @@ def rotation_matrix_from_vectors(vec1, vec2):
     """
     a, b = (vec1 / np.linalg.norm(vec1)).reshape(3), (vec2 / np.linalg.norm(vec2)).reshape(3)
     v = np.cross(a, b)
-    if any(v): #if not all zeros then
+    if any(v):  # if not all zeros then
         c = np.dot(a, b)
         s = np.linalg.norm(v)
         kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
         return np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2))
 
     else:
-        return np.eye(3) #cross of all zeros only occurs on identical directions
+        return np.eye(3)  # cross of all zeros only occurs on identical directions
+
 
 def angle_between_two_vectors(vec1, vec2):
     """ Calculate the angle between vec1 to vec2
@@ -93,7 +96,6 @@ def main():
     Rotation = np.eye(4)
     Rotation[:3, :3] = R
 
-    # T =  np.matmul(np.eye(4), Translation)
     mesh2_R = copy.deepcopy(mesh2).transform(Rotation)
 
     print("Before translation, two LeftEyeFront points:")
@@ -120,6 +122,9 @@ def main():
 
     print(f"After rotation and translation, the angle in degree between two eye axes: {angle_between_two_vectors(eyeAxis1,eyeAxis2)}\n")
 
+    # # Uncomment for Debug
+    # o3d.io.write_triangle_mesh('1.obj', mesh1)
+    # o3d.io.write_triangle_mesh('2.obj', mesh2_R_T)
 
 if __name__ == "__main__":
     main()
