@@ -54,6 +54,28 @@ def angle_between_two_vectors(vec1, vec2):
     return angle
 
 
+def get_plane_normal_vector_from_points(p, q, r):
+    """ Calculate the normal vector of a 3d plane from three points
+    :param p, q, r: three 3d points
+    :return a, b, c: normal vector
+    """
+
+    (x1, y1, z1) = p
+    (x2, y2, z2) = q
+    (x3, y3, z3) = r
+    a1 = x2 - x1
+    b1 = y2 - y1
+    c1 = z2 - z1
+    a2 = x3 - x1
+    b2 = y3 - y1
+    c2 = z3 - z1
+    a = b1 * c2 - b2 * c1
+    b = a2 * c1 - a1 * c2
+    c = a1 * b2 - b1 * a2
+    d = (- a * x1 - b * y1 - c * z1)  # if plane equation is needed
+    return a, b, c
+
+
 # def visualize(mesh):
 #     vis = o3d.visualization.Visualizer()
 #     vis.create_window()
@@ -114,13 +136,17 @@ def main():
     print(f"Mesh1: {mesh1.vertices[LeftEyeFront]}")
     print(f"Mesh2: {mesh2_R_T.vertices[LeftEyeFront]}\n")
 
-    mesh1.paint_uniform_color([1, 0, 0])
-    o3d.visualization.draw_geometries([mesh1, mesh2_R_T], mesh_show_wireframe=True)
-
     eye_axis1 = mesh1.vertices[LeftEyeFront] - mesh1.vertices[LeftEyeRear]
     eye_axis2 = mesh2_R_T.vertices[LeftEyeFront] - mesh2_R_T.vertices[LeftEyeRear]
 
     print(f"After rotation and translation, the angle in degree between two eye axes: {angle_between_two_vectors(eye_axis1,eye_axis2)}\n")
+
+    mid_plane1 = get_plane_normal_vector_from_points(mesh1.vertices[Head], mesh1.vertices[Nose], mesh1.vertices[Jaw])
+    mid_plane2 = get_plane_normal_vector_from_points(mesh2_R_T.vertices[Head], mesh2_R_T.vertices[Nose], mesh2_R_T.vertices[Jaw])
+    print(f"the angle in degree between two mid planes: {angle_between_two_vectors(mid_plane1,mid_plane2)}\n")
+
+    mesh1.paint_uniform_color([1, 0, 0])
+    o3d.visualization.draw_geometries([mesh1, mesh2_R_T], mesh_show_wireframe=True)
 
     # # Uncomment for Debug
     # o3d.io.write_triangle_mesh('1.obj', mesh1)
