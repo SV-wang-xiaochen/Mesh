@@ -63,36 +63,36 @@ def angle_between_two_vectors(vec1, vec2):
 
 def main():
     path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
-    list = glob.glob(f'{path}/**/*.obj', recursive=True)
+    obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 
-    meshNr1 = 52
-    meshNr2 = random.randint(0, len(list))
+    mesh_nr1 = 52
+    mesh_nr2 = random.randint(0, len(obj_list))
 
-    while (meshNr1 == meshNr2):
-        meshNr2 = random.randint(0, len(list))
+    while mesh_nr1 == mesh_nr2:
+        mesh_nr2 = random.randint(0, len(obj_list))
 
     print("Destination mesh:")
-    print(meshNr1, os.path.basename(list[meshNr1]), '\n')
+    print(mesh_nr1, os.path.basename(obj_list[mesh_nr1]), '\n')
     print("Source mesh:")
-    print(meshNr2, os.path.basename(list[meshNr2]), '\n')
+    print(mesh_nr2, os.path.basename(obj_list[mesh_nr2]), '\n')
 
-    mesh1 = o3d.io.read_triangle_mesh(list[meshNr1])
+    mesh1 = o3d.io.read_triangle_mesh(obj_list[mesh_nr1])
     # print(mesh1.vertices[LeftEyeFront])
     # Convert the triangle mesh to a point cloud
     # point_cloud1 = mesh1.sample_points_poisson_disk(number_of_points=5000)
 
-    mesh2 = o3d.io.read_triangle_mesh(list[meshNr2])
+    mesh2 = o3d.io.read_triangle_mesh(obj_list[mesh_nr2])
     # print(mesh2.vertices[LeftEyeFront])
     # Convert the triangle mesh to a point cloud
     # point_cloud2 = mesh2.sample_points_poisson_disk(number_of_points=10000)
     # Visualize the point cloud
 
-    eyeAxis1 = mesh1.vertices[LeftEyeFront] - mesh1.vertices[LeftEyeRear]
-    eyeAxis2 = mesh2.vertices[LeftEyeFront] - mesh2.vertices[LeftEyeRear]
+    eye_axis1 = mesh1.vertices[LeftEyeFront] - mesh1.vertices[LeftEyeRear]
+    eye_axis2 = mesh2.vertices[LeftEyeFront] - mesh2.vertices[LeftEyeRear]
 
-    print(f"Before rotation and translation, the angle in degree between two eye axes: {angle_between_two_vectors(eyeAxis1,eyeAxis2)}\n")
+    print(f"Before rotation and translation, the angle in degree between two eye axes: {angle_between_two_vectors(eye_axis1,eye_axis2)}\n")
 
-    R = rotation_matrix_from_vectors(eyeAxis2, eyeAxis1)
+    R = rotation_matrix_from_vectors(eye_axis2, eye_axis1)
     Rotation = np.eye(4)
     Rotation[:3, :3] = R
 
@@ -117,10 +117,10 @@ def main():
     mesh1.paint_uniform_color([1, 0, 0])
     o3d.visualization.draw_geometries([mesh1, mesh2_R_T], mesh_show_wireframe=True)
 
-    eyeAxis1 = mesh1.vertices[LeftEyeFront] - mesh1.vertices[LeftEyeRear]
-    eyeAxis2 = mesh2_R_T.vertices[LeftEyeFront] - mesh2_R_T.vertices[LeftEyeRear]
+    eye_axis1 = mesh1.vertices[LeftEyeFront] - mesh1.vertices[LeftEyeRear]
+    eye_axis2 = mesh2_R_T.vertices[LeftEyeFront] - mesh2_R_T.vertices[LeftEyeRear]
 
-    print(f"After rotation and translation, the angle in degree between two eye axes: {angle_between_two_vectors(eyeAxis1,eyeAxis2)}\n")
+    print(f"After rotation and translation, the angle in degree between two eye axes: {angle_between_two_vectors(eye_axis1,eye_axis2)}\n")
 
     # # Uncomment for Debug
     # o3d.io.write_triangle_mesh('1.obj', mesh1)

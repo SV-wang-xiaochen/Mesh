@@ -9,9 +9,9 @@ import glob
 
 def main():
     path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
-    list = glob.glob(f'{path}/**/*.obj', recursive=True)
+    obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 
-    for item in list:
+    for item in obj_list:
         mesh = o3d.io.read_triangle_mesh(item)
 
         o3d.io.write_triangle_mesh(item, mesh)
