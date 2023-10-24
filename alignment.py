@@ -1,16 +1,20 @@
+# Align head meshes of FLORENCE dataset by rules:
+# 1) mid plane of any head is parallel to y-z plane
+# 2) coordinate of LeftEyeFront point of any head is identical
+# 3) eye axis of any head is in a plane which is perpendicular to mid plane
+
 import open3d as o3d
 import numpy as np
 import copy
 import glob
-import random
 import os
 
 LeftEyeFront = 4043
 LeftEyeRear = 4463
 RightEyeFront = 4587
-Head = 1726
-Nose = 2825
-Jaw = 3584
+Head1 = 1726
+Head2 = 1335
+Head3 = 1203
 
 
 def rotation_matrix_from_vectors(vec1, vec2):
@@ -76,81 +80,76 @@ def get_plane_normal_vector_from_points(p, q, r):
     return a, b, c
 
 
-# def visualize(mesh):
-#     vis = o3d.visualization.Visualizer()
-#     vis.create_window()
-#     vis.add_geometry(mesh)
-#     vis.run()
-#     vis.destroy_window()
+def align(mesh):
+    """ Align the mid plane, LeftEyeFront point and eye axis
+    :param mesh: source mesh
+    :return copy.deepcopy(mesh_mid).transform(Translation): aligned mesh
+    """
 
-def main():
-    path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
-    obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
+    ref_plane = (1, 0, 0)
+    mid_plane = get_plane_normal_vector_from_points(mesh.vertices[Head1], mesh.vertices[Head2], mesh.vertices[Head3])
+    print(f"Before rotation, the angle in degree between ref plane and mid plane: {angle_between_two_vectors(ref_plane,mid_plane)}\n")
 
-    mesh_nr1 = 52
-    mesh_nr2 = random.randint(0, len(obj_list))
-
-    while mesh_nr1 == mesh_nr2:
-        mesh_nr2 = random.randint(0, len(obj_list))
-
-    print("Destination mesh:")
-    print(mesh_nr1, os.path.basename(obj_list[mesh_nr1]), '\n')
-    print("Source mesh:")
-    print(mesh_nr2, os.path.basename(obj_list[mesh_nr2]), '\n')
-
-    mesh1 = o3d.io.read_triangle_mesh(obj_list[mesh_nr1])
-    # print(mesh1.vertices[LeftEyeFront])
-    # Convert the triangle mesh to a point cloud
-    # point_cloud1 = mesh1.sample_points_poisson_disk(number_of_points=5000)
-
-    mesh2 = o3d.io.read_triangle_mesh(obj_list[mesh_nr2])
-    # print(mesh2.vertices[LeftEyeFront])
-    # Convert the triangle mesh to a point cloud
-    # point_cloud2 = mesh2.sample_points_poisson_disk(number_of_points=10000)
-    # Visualize the point cloud
-
-    eye_axis1 = mesh1.vertices[LeftEyeFront] - mesh1.vertices[LeftEyeRear]
-    eye_axis2 = mesh2.vertices[LeftEyeFront] - mesh2.vertices[LeftEyeRear]
-
-    print(f"Before rotation and translation, the angle in degree between two eye axes: {angle_between_two_vectors(eye_axis1,eye_axis2)}\n")
-
-    R = rotation_matrix_from_vectors(eye_axis2, eye_axis1)
+    # align mid plane
+    R = rotation_matrix_from_vectors(mid_plane, ref_plane)
     Rotation = np.eye(4)
     Rotation[:3, :3] = R
 
-    mesh2_R = copy.deepcopy(mesh2).transform(Rotation)
+    mesh_mid = copy.deepcopy(mesh).transform(Rotation)
 
-    print("Before translation, two LeftEyeFront points:")
-    print(f"Mesh1: {mesh1.vertices[LeftEyeFront]}")
-    print(f"Mesh2: {mesh2.vertices[LeftEyeFront]}\n")
+    ref_plane = (1, 0, 0)
+    mid_plane = get_plane_normal_vector_from_points(mesh_mid.vertices[Head1], mesh_mid.vertices[Head2], mesh_mid.vertices[Head3])
 
-    trans = mesh1.vertices[LeftEyeFront] - mesh2_R.vertices[LeftEyeFront]
+    print(f"After rotation, the angle in degree between ref plane and mid plane: {angle_between_two_vectors(ref_plane,mid_plane)}\n")
+
+    # align LeftEyeFront point
+    trans = (0, 0, 0) - mesh_mid.vertices[LeftEyeFront]
     Translation = np.eye(4)
     Translation[0, 3] = trans[0]
     Translation[1, 3] = trans[1]
     Translation[2, 3] = trans[2]
 
-    mesh2_R_T = copy.deepcopy(mesh2_R).transform(Translation)
+    mesh_mid_T = copy.deepcopy(mesh_mid).transform(Translation)
 
-    print("After translation, two LeftEyeFront points:")
-    print(f"Mesh1: {mesh1.vertices[LeftEyeFront]}")
-    print(f"Mesh2: {mesh2_R_T.vertices[LeftEyeFront]}\n")
+    # align eye axis in a plane which is perpendicular to mid plane (also parallel to x-z plane)
+    ref_vec = (0, 0, -1)
+    eye_axis_vec = mesh_mid_T.vertices[LeftEyeRear]
+    eye_axis_vec[0] = 0
+    print('eye_axis_vec')
+    print(eye_axis_vec)
 
-    eye_axis1 = mesh1.vertices[LeftEyeFront] - mesh1.vertices[LeftEyeRear]
-    eye_axis2 = mesh2_R_T.vertices[LeftEyeFront] - mesh2_R_T.vertices[LeftEyeRear]
+    R = rotation_matrix_from_vectors(eye_axis_vec, ref_vec)
+    Rotation = np.eye(4)
+    Rotation[:3, :3] = R
 
-    print(f"After rotation and translation, the angle in degree between two eye axes: {angle_between_two_vectors(eye_axis1,eye_axis2)}\n")
+    return copy.deepcopy(mesh_mid_T).transform(Rotation)
 
-    mid_plane1 = get_plane_normal_vector_from_points(mesh1.vertices[Head], mesh1.vertices[Nose], mesh1.vertices[Jaw])
-    mid_plane2 = get_plane_normal_vector_from_points(mesh2_R_T.vertices[Head], mesh2_R_T.vertices[Nose], mesh2_R_T.vertices[Jaw])
-    print(f"the angle in degree between two mid planes: {angle_between_two_vectors(mid_plane1,mid_plane2)}\n")
 
-    mesh1.paint_uniform_color([1, 0, 0])
-    o3d.visualization.draw_geometries([mesh1, mesh2_R_T], mesh_show_wireframe=True)
+def main():
+    path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
+    obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
+
+    mesh_plot_list = []
+
+    for mesh_nr in range(0,len(obj_list)):
+
+        print("Source mesh:")
+        print(mesh_nr, os.path.basename(obj_list[mesh_nr]), '\n')
+
+        mesh = o3d.io.read_triangle_mesh(obj_list[mesh_nr])
+
+        mesh_aligned = align(mesh)
+
+        mesh_plot_list.append(mesh_aligned)
+
+        # # Uncomment to save processed mesh
+        # o3d.io.write_triangle_mesh(obj_list[mesh_nr], mesh_aligned)
+
+    o3d.visualization.draw_geometries(mesh_plot_list, mesh_show_wireframe=True)
 
     # # Uncomment for Debug
-    # o3d.io.write_triangle_mesh('1.obj', mesh1)
-    # o3d.io.write_triangle_mesh('2.obj', mesh2_R_T)
+    # o3d.io.write_triangle_mesh('1.obj', mesh_plot_list[0])
+    # o3d.io.write_triangle_mesh('2.obj', mesh_plot_list[1])
 
 if __name__ == "__main__":
     main()
