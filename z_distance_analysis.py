@@ -1,3 +1,7 @@
+# Assume that there is a plane which is parallel to x-y plane. It moves along z-axis.
+# This code calculates how many heads are touched by the plane at different z.
+# "Head is touched" is defined that z value of the plane is equal or smaller than that of the check point.
+
 import open3d as o3d
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,13 +11,21 @@ import os
 
 NUM_BIN = 50
 
+NASAL_TIP = ['Nasal Tip', 2825]
+NASAL_ALA = ['Nasal Ala', 2881]
+BROW_BONE = ['Brow Bone', 2111]
+
+# set CHECK_POINT here
+CHECK_POINT = NASAL_TIP
+
+
 def main():
     path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
     obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 
     mesh_plot_list = []
 
-    max_z_list = []
+    check_point_values = []
 
     for mesh_nr in range(0,len(obj_list)):
 
@@ -24,33 +36,26 @@ def main():
 
         mesh_plot_list.append(mesh)
 
-        max_z = np.max(np.asarray(mesh.vertices)[:,2])
+        if CHECK_POINT == NASAL_TIP:
+            check_point_value = np.max(np.asarray(mesh.vertices)[:,2])*1000
+        else:
+            check_point_value = np.asarray(mesh.vertices)[CHECK_POINT[1], 2]*1000
 
-        max_z_list.append(max_z)
+        check_point_values.append(check_point_value)
 
     # o3d.visualization.draw_geometries(mesh_plot_list, mesh_show_wireframe=True)
-    print(sorted(max_z_list))
+    print(sorted(check_point_values))
 
-    # # Create a histogram
-    # plt.hist(max_z_list, bins=50, color='skyblue', edgecolor='black')
-    #
-    # # Add labels and a title
-    # plt.xlabel('Max Z Value')
-    # plt.ylabel('Frequency')
-    # plt.title('Histogram')
-    #
-    # # Show the plot
-    # plt.show()
-
-    # # Create a cumulative frequency histogram
-    res = stats.cumfreq(max_z_list, numbins=NUM_BIN)
+    # # Create histogram and cumulative frequency histogram
+    res = stats.cumfreq(check_point_values, numbins=NUM_BIN)
 
     x = res.lowerlimit + np.linspace(res.binsize*res.cumcount.size, 0, res.cumcount.size)
 
     fig = plt.figure(figsize=(10, 4))
+    fig.suptitle(CHECK_POINT[0])
     ax1 = fig.add_subplot(1, 2, 1)
     ax2 = fig.add_subplot(1, 2, 2)
-    ax1.hist(max_z_list, bins=NUM_BIN)
+    ax1.hist(check_point_values, bins=NUM_BIN)
     ax1.set_title('Histogram')
     ax2.bar(x, res.cumcount, width=res.binsize)
     ax2.set_title('Cumulative histogram')
