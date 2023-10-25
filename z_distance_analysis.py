@@ -1,6 +1,6 @@
 # Assume that there is a plane which is parallel to x-y plane. It moves along z-axis.
-# This code calculates how many heads are touched by the plane at different z.
-# "Head is touched" is defined that z value of the plane is equal or smaller than that of the check point.
+# This code calculates how many heads are intersected by the plane at different z.
+# "Head is intersected" is defined that z value of the plane is equal or smaller than that of the check point.
 
 import open3d as o3d
 import numpy as np
