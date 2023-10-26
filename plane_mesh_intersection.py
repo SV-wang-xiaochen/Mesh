@@ -1,6 +1,7 @@
 import trimesh
 import glob
 import numpy as np
+import copy
 
 Z_LENS = 12 # Z distance from Lens plane to LeftEyeFront point. Range: 3-30 mm
 
@@ -14,7 +15,9 @@ BROW_ABOVE = 2295
 path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
 obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 
-mesh = trimesh.load_mesh(obj_list[38])
+mesh_original = trimesh.load_mesh(obj_list[0])
+
+mesh = copy.deepcopy(mesh_original)
 
 ####################### remove unrelated mesh #######################
 x1 = (mesh.vertices[Head1][0] + mesh.vertices[Head2][0] + mesh.vertices[Head3][0])/3
@@ -43,7 +46,7 @@ face_mask = vertices_mask[mesh.faces].all(axis=1)
 mesh.update_faces(face_mask)
 
 scene = trimesh.Scene()
-scene.add_geometry(mesh)
+scene.add_geometry(mesh_original)
 
 ####################### find intersection between lens plane and mesh #######################
 
