@@ -1,5 +1,6 @@
 import trimesh
 import glob
+import numpy as np
 
 Z_LENS = 12 # Z distance from Lens plane to LeftEyeFront point. Range: 3-30 mm
 
@@ -41,20 +42,56 @@ vertices_mask = vertices[:,2] > z1
 face_mask = vertices_mask[mesh.faces].all(axis=1)
 mesh.update_faces(face_mask)
 
-####################################################################
-
 scene = trimesh.Scene()
 scene.add_geometry(mesh)
+
+####################### find intersection between lens plane and mesh #######################
 
 # Define a plane as "a point on the plane and its normal"
 point_on_plane = [0, 0, Z_LENS/1000]
 plane_normal = [0, 0, 1]
 
 # Find the intersection between the mesh and the plane
-lines = trimesh.intersections.mesh_plane(mesh, plane_normal, point_on_plane) # lines is np.ndarry
+lines = trimesh.intersections.mesh_plane(mesh, plane_normal, point_on_plane)
 print(len(lines))
 
-p = trimesh.load_path(lines)
+intersection = trimesh.load_path(lines)
+scene.add_geometry(intersection)
 
-scene.add_geometry(p)
+####################### draw the max lens (a circle with diameter 80mm) #######################
+
+# Define the parameters
+origin = np.array([0, 0, Z_LENS/1000])
+radius = 0.04
+num_points = 100  # Number of points to create the circle
+
+# Create an array of angles to parametrically define the circle
+theta = np.linspace(0, 2 * np.pi, num_points)
+
+# Parametric equations to generate points on the circle
+x = radius * np.cos(theta) + origin[0]
+y = radius * np.sin(theta) + origin[1]
+z = np.full(num_points, origin[2])  # Constant z-coordinate
+
+# Create an array to store the line segments
+line_segments = []
+
+# Connect the points to create line segments
+for i in range(num_points - 1):
+    line_segments.append([[x[i], y[i], z[i]], [x[i + 1], y[i + 1], z[i + 1]]])
+
+# Connect the last point to the first point to close the circle
+line_segments.append([[x[-1], y[-1], z[-1]], [x[0], y[0], z[0]]])
+
+# Convert the line segments to a NumPy array
+line_segments = np.array(line_segments)
+
+circle = trimesh.load_path(line_segments)
+scene.add_geometry(circle)
+
+# plot the LeftEyeFront point
+origin = trimesh.points.PointCloud(vertices=[[0, 0, 0]], colors=(255, 0, 0))
+scene.add_geometry(origin)
+
 scene.show(smooth=False)
+
