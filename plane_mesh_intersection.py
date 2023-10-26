@@ -5,6 +5,7 @@ import copy
 
 Z_LENS = 12 # Z distance from Lens plane to LeftEyeFront point. Range: 3-30 mm
 
+NOT_SHOW_MESH = False # Do not show any mesh. Only show the intersection and lens
 SHOW_FULL_MESH = True # Show full mesh or ONLY "mesh of interest" which is used to find the intersection with lens plane
 
 LeftEyeRear = 4463
@@ -66,10 +67,12 @@ face_mask = vertices_mask[mesh.faces].all(axis=1)
 mesh.update_faces(face_mask)
 
 scene = trimesh.Scene()
-if SHOW_FULL_MESH:
-    scene.add_geometry(mesh_original)
-else:
-    scene.add_geometry(mesh)
+
+if not NOT_SHOW_MESH:
+    if SHOW_FULL_MESH:
+        scene.add_geometry(mesh_original)
+    else:
+        scene.add_geometry(mesh)
 
 ####################### draw the max lens (a circle with diameter 80mm) #######################
 
