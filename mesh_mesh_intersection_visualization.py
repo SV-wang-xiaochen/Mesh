@@ -11,6 +11,8 @@ MESH_NR = 0
 LeftEyeFront = 4043
 LeftEyeRear = 4463
 
+eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
+
 # Define the semi-axes lengths of the ellipsoid lens
 lens_scale = 10
 lens_semi_x = 3 # eye left-right direction
@@ -22,9 +24,9 @@ angle_x = 0  # Eye up-down Rotation around x-axis, + means down
 angle_y = 0  # Eye left-right Rotation around y-axis, + means left
 
 # Define lens centroid
-lens_centroid_x = 0
-lens_centroid_y = 0
-lens_centroid_z = 12
+lens_init_centroid_x = 0
+lens_init_centroid_y = 0
+lens_init_centroid_z = 12
 
 
 def ellipsoid(a, b, c):
@@ -64,8 +66,6 @@ mesh_original = trimesh.load_mesh(obj_list[MESH_NR])
 mesh_original.visual.face_colors = [64, 64, 64, 100]
 
 scene = trimesh.Scene()
-
-eye_ball_centroid = (mesh_original.vertices[LeftEyeFront]+mesh_original.vertices[LeftEyeRear])/2
 
 scene.add_geometry(mesh_original)
 
@@ -108,8 +108,8 @@ homogeneous_Ry = np.eye(4)
 homogeneous_Ry[:3, :3] = Ry
 
 # Create the translation matrix for the initial lens centroid
-translation = np.array([lens_centroid_x/1000, lens_centroid_y/1000,
-                        lens_centroid_z/1000])
+translation = np.array([lens_init_centroid_x/1000, lens_init_centroid_y/1000,
+                        lens_init_centroid_z/1000])
 homogeneous_translation = np.eye(4)
 homogeneous_translation[:3, 3] = translation
 
@@ -126,9 +126,23 @@ ellipsoid_mesh.apply_translation([-eye_ball_centroid[0], -eye_ball_centroid[1], 
 
 ############### do 15 degree rotation here ################
 
-#######################  Translate the coordinates back so that the LeftEyeFront point becomes the origin. #######################
-ellipsoid_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
+# #######################  Create 3d sphere, which is the region where centroid of the lens could be located #######################
 
+sphere_radius = lens_init_centroid_z/1000-eye_ball_centroid[2]
+
+# Generate sphere points
+x, y, z = ellipsoid(sphere_radius, sphere_radius, sphere_radius)
+
+# Create a trimesh object from vertices and faces
+vertices = np.stack((x.flatten(), y.flatten(), z.flatten()), axis=-1)
+cloud = trimesh.PointCloud(vertices)
+sphere_mesh = cloud.convex_hull
+sphere_mesh.visual.face_colors = [255, 255, 0, 100]
+
+#######################  Translate the coordinates back so that the LeftEyeFront point becomes the origin. #######################
+sphere_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
+scene.add_geometry(sphere_mesh)
+ellipsoid_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
 scene.add_geometry(ellipsoid_mesh)
 
 # Visualize the trimesh
