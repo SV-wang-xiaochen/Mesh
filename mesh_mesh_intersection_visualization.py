@@ -29,6 +29,29 @@ lens_init_centroid_y = 0
 lens_init_centroid_z = 12
 
 
+def angle_between_two_vectors(vec1, vec2):
+    """ Calculate the angle between vec1 to vec2
+    :param vec1, vec2: two 3d vectors
+    :return angle: angle in degrees
+    """
+
+    # Calculate the dot product
+    dot_product = np.dot(vec1, vec2)
+
+    # Calculate the magnitudes of both vectors
+    magnitude1 = np.linalg.norm(vec1)
+    magnitude2 = np.linalg.norm(vec2)
+
+    # Calculate the angle in radians
+    cosine_theta = dot_product / (magnitude1 * magnitude2)
+    theta = np.arccos(cosine_theta)
+
+    # Convert the angle to degrees
+    angle = np.degrees(theta)
+
+    return angle
+
+
 def ellipsoid(a, b, c):
     u = np.linspace(0, 2 * np.pi, 100)
     v = np.linspace(0, np.pi, 50)
@@ -47,6 +70,7 @@ def trimesh2open3d(mesh):
     o3d_mesh.triangles = o3d.utility.Vector3iVector(faces)
 
     return o3d_mesh
+
 
 def o3dTriangleMesh2PointCloud(mesh):
     # Extract vertices from the TriangleMesh
@@ -135,6 +159,15 @@ x, y, z = ellipsoid(sphere_radius, sphere_radius, sphere_radius)
 
 # Create a trimesh object from vertices and faces
 vertices = np.stack((x.flatten(), y.flatten(), z.flatten()), axis=-1)
+
+# Get the vertices which are within the 15 degree region
+vertices_valid = []
+for sphere_point in vertices:
+    if (angle_between_two_vectors([0,0,1], sphere_point) <= 15 and
+            sphere_point[0]>=0 and sphere_point[2]>=0 and sphere_point[1]<=0):
+        vertices_valid.append(sphere_point)
+vertices_valid = np.array(vertices_valid)
+
 cloud = trimesh.PointCloud(vertices)
 sphere_mesh = cloud.convex_hull
 sphere_mesh.visual.face_colors = [255, 255, 0, 100]
