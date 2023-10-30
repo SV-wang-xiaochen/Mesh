@@ -65,21 +65,17 @@ mesh_original.visual.face_colors = [64, 64, 64, 100]
 
 scene = trimesh.Scene()
 
-scene.add_geometry(mesh_original)
-
-eye_ball_centroid_shift = (mesh_original.vertices[LeftEyeFront]+mesh_original.vertices[LeftEyeRear])/2
-
-#######################  Translate the coordinates so that the centroid of eye ball becomes the origin. #######################
-mesh_original.apply_translation([-eye_ball_centroid_shift[0], -eye_ball_centroid_shift[1], -eye_ball_centroid_shift[2]])
-
 eye_ball_centroid = (mesh_original.vertices[LeftEyeFront]+mesh_original.vertices[LeftEyeRear])/2
+
+scene.add_geometry(mesh_original)
 
 # plot the LeftEyeFront/LeftEyeRear/centroid point
 eye_ball_key_points = trimesh.points.PointCloud(vertices=[mesh_original.vertices[LeftEyeFront], mesh_original.vertices[LeftEyeRear],
                                                 eye_ball_centroid], colors=(255, 0, 0))
+
 scene.add_geometry(eye_ball_key_points)
 
-# #######################  Create ellipsoid lens #######################
+# #######################  Create ellipsoid lens (this part will be replaced by loading a pre-defined lens mesh) #######################
 
 # Generate ellipsoid points
 x, y, z = ellipsoid(lens_semi_x*lens_scale/1000, lens_semi_y*lens_scale/1000, lens_semi_z*lens_scale/1000)
@@ -111,16 +107,11 @@ homogeneous_Rx[:3, :3] = Rx
 homogeneous_Ry = np.eye(4)
 homogeneous_Ry[:3, :3] = Ry
 
-# Create the translation matrix for the initial centroid
-translation = np.array([lens_centroid_x/1000, lens_centroid_y/1000, lens_centroid_z/1000])
+# Create the translation matrix for the initial lens centroid
+translation = np.array([lens_centroid_x/1000, lens_centroid_y/1000,
+                        lens_centroid_z/1000])
 homogeneous_translation = np.eye(4)
 homogeneous_translation[:3, 3] = translation
-
-# plot the lens centroid point
-lens_centroid_point = trimesh.points.PointCloud(vertices=[[lens_centroid_x/1000-eye_ball_centroid_shift[0],
-                                                           lens_centroid_y/1000-eye_ball_centroid_shift[1],
-                                                           lens_centroid_z/1000-eye_ball_centroid_shift[2]]], colors=(255, 255, 0))
-scene.add_geometry(lens_centroid_point)
 
 # Combine the transformations (order matters)
 # Here, we perform rotation about y first, then about x
@@ -128,12 +119,15 @@ combined_transform = np.dot(homogeneous_translation, np.dot(homogeneous_Rx, homo
 
 # Apply the rotation to the mesh vertices
 ellipsoid_mesh.apply_transform(combined_transform)
+# #######################  Create ellipsoid lens (this part will be replaced by loading a pre-defined lens mesh) #######################
 
-ellipsoid_mesh.apply_translation([-eye_ball_centroid_shift[0], -eye_ball_centroid_shift[1], -eye_ball_centroid_shift[2]])
+#######################  Translate the coordinates so that the centroid of eye ball becomes the origin. #######################
+ellipsoid_mesh.apply_translation([-eye_ball_centroid[0], -eye_ball_centroid[1], -eye_ball_centroid[2]])
 
-# # alternative apply_translation and apply_scale, which is equivalent to apply_transform
-# ellipsoid_mesh.apply_translation([lens_centroid_x/1000, lens_centroid_y/1000, lens_centroid_z/1000])
-# ellipsoid_mesh.apply_scale(5)
+############### do 15 degree rotation here ################
+
+#######################  Translate the coordinates back so that the LeftEyeFront point becomes the origin. #######################
+ellipsoid_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
 
 scene.add_geometry(ellipsoid_mesh)
 
