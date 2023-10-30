@@ -1,10 +1,25 @@
 import trimesh
 import glob
 import numpy as np
-import copy
+import math
 
 MESH_NR = 0
 LeftEyeRear = 4463
+
+# Define the semi-axes lengths of the ellipsoid lens
+lens_scale = 10
+lens_x = 5 # eye left-right direction
+lens_y = 3 # eye up-down direction
+lens_z = 1 # eye front-rear direction
+
+# Define the rotation angles in degrees
+angle_x = 15  # Eye up-down Rotation around x-axis, + means down
+angle_y = 0  # Eye left-right Rotation around y-axis, + means left
+
+# Define translation values
+trans_x = 0
+trans_y = 0
+trans_z = 45
 
 def line_segment_with_circle(line_segment, circle_origin, circle_radius):
     """ Check if a line segment is within a circle. Here the line segment must be within the plane where the circle is within.
@@ -47,31 +62,14 @@ def ellipsoid(a, b, c):
     z = c * np.outer(np.ones(np.size(u)), np.cos(v))
     return x, y, z
 
-# Define the semi-axes lengths of the ellipsoid
-lens_scale = 10
-a = 5 # eye left-right direction
-b = 3 # eye up-down direction
-c = 1 # eye front-rear direction
-
 # Generate ellipsoid points
-x, y, z = ellipsoid(a*lens_scale/1000, b*lens_scale/1000, c*lens_scale/1000)
+x, y, z = ellipsoid(lens_x*lens_scale/1000, lens_y*lens_scale/1000, lens_z*lens_scale/1000)
 
 # Create a trimesh object from vertices and faces
 vertices = np.stack((x.flatten(), y.flatten(), z.flatten()), axis=-1)
 cloud = trimesh.PointCloud(vertices)
 ellipsoid_mesh = cloud.convex_hull
 ellipsoid_mesh.visual.face_colors = [0, 0, 255, 100]
-
-import math
-
-# Define the rotation angles in degrees
-angle_x = 0  # Rotation around x-axis, eye up-down direction, + means down
-angle_y = 15  # Rotation around y-axis, eye left-right direction, + means left
-
-# Define translation values
-trans_x = 0
-trans_y = 0
-trans_z = 45
 
 # plot the lens center point
 origin = trimesh.points.PointCloud(vertices=[[trans_x/1000, trans_y/1000, trans_z/1000]], colors=(0, 255, 0))
