@@ -67,9 +67,16 @@ scene = trimesh.Scene()
 
 scene.add_geometry(mesh_original)
 
-# plot the LeftEyeFront/LeftEyeRear point and mid of both
+eye_ball_centroid_shift = (mesh_original.vertices[LeftEyeFront]+mesh_original.vertices[LeftEyeRear])/2
+
+#######################  Translate the coordinates so that the centroid of eye ball becomes the origin. #######################
+mesh_original.apply_translation([-eye_ball_centroid_shift[0], -eye_ball_centroid_shift[1], -eye_ball_centroid_shift[2]])
+
+eye_ball_centroid = (mesh_original.vertices[LeftEyeFront]+mesh_original.vertices[LeftEyeRear])/2
+
+# plot the LeftEyeFront/LeftEyeRear/centroid point
 eye_ball_key_points = trimesh.points.PointCloud(vertices=[mesh_original.vertices[LeftEyeFront], mesh_original.vertices[LeftEyeRear],
-         (mesh_original.vertices[LeftEyeFront]+mesh_original.vertices[LeftEyeRear])/2], colors=(255, 0, 0))
+                                                eye_ball_centroid], colors=(255, 0, 0))
 scene.add_geometry(eye_ball_key_points)
 
 # #######################  Create ellipsoid lens #######################
@@ -110,7 +117,9 @@ homogeneous_translation = np.eye(4)
 homogeneous_translation[:3, 3] = translation
 
 # plot the lens centroid point
-lens_centroid_point = trimesh.points.PointCloud(vertices=[[lens_centroid_x/1000, lens_centroid_y/1000, lens_centroid_z/1000]], colors=(255, 255, 0))
+lens_centroid_point = trimesh.points.PointCloud(vertices=[[lens_centroid_x/1000-eye_ball_centroid_shift[0],
+                                                           lens_centroid_y/1000-eye_ball_centroid_shift[1],
+                                                           lens_centroid_z/1000-eye_ball_centroid_shift[2]]], colors=(255, 255, 0))
 scene.add_geometry(lens_centroid_point)
 
 # Combine the transformations (order matters)
@@ -119,6 +128,8 @@ combined_transform = np.dot(homogeneous_translation, np.dot(homogeneous_Rx, homo
 
 # Apply the rotation to the mesh vertices
 ellipsoid_mesh.apply_transform(combined_transform)
+
+ellipsoid_mesh.apply_translation([-eye_ball_centroid_shift[0], -eye_ball_centroid_shift[1], -eye_ball_centroid_shift[2]])
 
 # # alternative apply_translation and apply_scale, which is equivalent to apply_transform
 # ellipsoid_mesh.apply_translation([lens_centroid_x/1000, lens_centroid_y/1000, lens_centroid_z/1000])
@@ -130,13 +141,13 @@ scene.add_geometry(ellipsoid_mesh)
 scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
 # #######################  Convert trimesh to open3d mesh #######################
-ellipsoid_mesh_o3d = trimesh2open3d(ellipsoid_mesh)
-mesh_original_o3d = trimesh2open3d(mesh_original)
-ellipsoid_pcl_o3d = o3dTriangleMesh2PointCloud(ellipsoid_mesh_o3d)
-mesh_pcl_o3d = o3dTriangleMesh2PointCloud(mesh_original_o3d)
-
-distances = np.array(ellipsoid_pcl_o3d.compute_point_cloud_distance(mesh_pcl_o3d))
-print(np.max(distances), np.min(distances))
-
-# Visualize the Open3D mesh
-o3d.visualization.draw_geometries([mesh_original_o3d, ellipsoid_mesh_o3d], mesh_show_wireframe=True)
+# ellipsoid_mesh_o3d = trimesh2open3d(ellipsoid_mesh)
+# mesh_original_o3d = trimesh2open3d(mesh_original)
+# ellipsoid_pcl_o3d = o3dTriangleMesh2PointCloud(ellipsoid_mesh_o3d)
+# mesh_pcl_o3d = o3dTriangleMesh2PointCloud(mesh_original_o3d)
+#
+# distances = np.array(ellipsoid_pcl_o3d.compute_point_cloud_distance(mesh_pcl_o3d))
+# print(np.max(distances), np.min(distances))
+#
+# # Visualize the Open3D mesh
+# o3d.visualization.draw_geometries([mesh_original_o3d, ellipsoid_mesh_o3d], mesh_show_wireframe=True)
