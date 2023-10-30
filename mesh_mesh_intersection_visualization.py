@@ -116,54 +116,14 @@ eye_ball_key_points = trimesh.points.PointCloud(vertices=[mesh_original.vertices
 
 scene.add_geometry(eye_ball_key_points)
 
-# #######################  Create ellipsoid lens (this part will be replaced by loading a pre-defined lens mesh) #######################
+# #######################  Load lens mesh #######################
 
-# Generate ellipsoid points
-x, y, z = ellipsoid(lens_semi_x*lens_scale/1000, lens_semi_y*lens_scale/1000, lens_semi_z*lens_scale/1000)
-
-# Create a trimesh object from vertices and faces
-vertices = np.stack((x.flatten(), y.flatten(), z.flatten()), axis=-1)
-cloud = trimesh.PointCloud(vertices)
-ellipsoid_mesh = cloud.convex_hull
-ellipsoid_mesh.visual.face_colors = [0, 0, 255, 100]
-
-# Convert degrees to radians
-theta = math.radians(angle_x)
-phi = math.radians(angle_y)
-
-# Define the rotation matrices in 3D
-Rx = np.array([[1, 0, 0],
-               [0, math.cos(theta), -math.sin(theta)],
-               [0, math.sin(theta), math.cos(theta)]])
-
-Ry = np.array([[math.cos(phi), 0, math.sin(phi)],
-               [0, 1, 0],
-               [-math.sin(phi), 0, math.cos(phi)]])
-
-# Create 4x4 transformation matrices (homogeneous transformation matrices)
-# For rotations around x and y axes
-homogeneous_Rx = np.eye(4)
-homogeneous_Rx[:3, :3] = Rx
-
-homogeneous_Ry = np.eye(4)
-homogeneous_Ry[:3, :3] = Ry
-
-# Create the translation matrix for the initial lens centroid
-translation = np.array([lens_init_centroid_x/1000, lens_init_centroid_y/1000,
-                        lens_init_centroid_z/1000])
-homogeneous_translation = np.eye(4)
-homogeneous_translation[:3, 3] = translation
-
-# Combine the transformations (order matters)
-# Here, we perform rotation about y first, then about x
-combined_transform = np.dot(homogeneous_translation, np.dot(homogeneous_Rx, homogeneous_Ry))
-
-# Apply the rotation to the mesh vertices
-ellipsoid_mesh.apply_transform(combined_transform)
-# #######################  Create ellipsoid lens (this part will be replaced by loading a pre-defined lens mesh) #######################
+lens_path = r'C:\Users\xiaochen.wang\Projects\Dataset\lens_z12.obj'
+lens_mesh = trimesh.load_mesh(lens_path)
+lens_mesh.visual.face_colors = [64, 64, 64, 100]
 
 #######################  Translate the coordinates so that the centroid of eye ball becomes the origin. #######################
-ellipsoid_mesh.apply_translation([-eye_ball_centroid[0], -eye_ball_centroid[1], -eye_ball_centroid[2]])
+lens_mesh.apply_translation([-eye_ball_centroid[0], -eye_ball_centroid[1], -eye_ball_centroid[2]])
 
 ############### do 15 degree rotation here ################
 
@@ -200,13 +160,13 @@ R = rotation_matrix_from_vectors([0,0,1], vertices_valid[0])
 Rotation = np.eye(4)
 Rotation[:3, :3] = R
 
-ellipsoid_mesh.apply_transform(Rotation)
+lens_mesh.apply_transform(Rotation)
 
 #######################  Translate the coordinates back so that the LeftEyeFront point becomes the origin. #######################
 sphere_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
 scene.add_geometry(sphere_mesh)
-ellipsoid_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
-scene.add_geometry(ellipsoid_mesh)
+lens_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
+scene.add_geometry(lens_mesh)
 
 # Visualize the trimesh
 scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
