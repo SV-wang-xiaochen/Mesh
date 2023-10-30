@@ -4,23 +4,27 @@ import glob
 import numpy as np
 import math
 
+
+SHOW_WIREFRAME = False
+
 MESH_NR = 0
+LeftEyeFront = 4043
 LeftEyeRear = 4463
 
 # Define the semi-axes lengths of the ellipsoid lens
 lens_scale = 10
-lens_semi_x = 5 # eye left-right direction
+lens_semi_x = 3 # eye left-right direction
 lens_semi_y = 3 # eye up-down direction
-lens_semi_z = 1 # eye front-rear direction
+lens_semi_z = 0.1 # eye front-rear direction
 
 # Define the rotation angles in degrees
-angle_x = 15  # Eye up-down Rotation around x-axis, + means down
+angle_x = 0  # Eye up-down Rotation around x-axis, + means down
 angle_y = 0  # Eye left-right Rotation around y-axis, + means left
 
 # Define lens centroid
 lens_centroid_x = 0
 lens_centroid_y = 0
-lens_centroid_z = 45
+lens_centroid_z = 12
 
 
 def ellipsoid(a, b, c):
@@ -57,14 +61,16 @@ path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
 obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 
 mesh_original = trimesh.load_mesh(obj_list[MESH_NR])
+mesh_original.visual.face_colors = [64, 64, 64, 100]
 
 scene = trimesh.Scene()
 
 scene.add_geometry(mesh_original)
 
-# plot the LeftEyeFront point
-origin = trimesh.points.PointCloud(vertices=[[0, 0, 0]], colors=(255, 0, 0))
-scene.add_geometry(origin)
+# plot the LeftEyeFront/LeftEyeRear point and mid of both
+eye_ball_key_points = trimesh.points.PointCloud(vertices=[mesh_original.vertices[LeftEyeFront], mesh_original.vertices[LeftEyeRear],
+         (mesh_original.vertices[LeftEyeFront]+mesh_original.vertices[LeftEyeRear])/2], colors=(255, 0, 0))
+scene.add_geometry(eye_ball_key_points)
 
 # #######################  Create ellipsoid lens #######################
 
@@ -104,8 +110,8 @@ homogeneous_translation = np.eye(4)
 homogeneous_translation[:3, 3] = translation
 
 # plot the lens centroid point
-origin = trimesh.points.PointCloud(vertices=[[lens_centroid_x/1000, lens_centroid_y/1000, lens_centroid_z/1000]], colors=(0, 255, 0))
-scene.add_geometry(origin)
+lens_centroid_point = trimesh.points.PointCloud(vertices=[[lens_centroid_x/1000, lens_centroid_y/1000, lens_centroid_z/1000]], colors=(255, 255, 0))
+scene.add_geometry(lens_centroid_point)
 
 # Combine the transformations (order matters)
 # Here, we perform rotation about y first, then about x
@@ -120,8 +126,8 @@ ellipsoid_mesh.apply_transform(combined_transform)
 
 scene.add_geometry(ellipsoid_mesh)
 
-# # Visualize the trimesh
-# scene.show(smooth=False)
+# Visualize the trimesh
+scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
 # #######################  Convert trimesh to open3d mesh #######################
 ellipsoid_mesh_o3d = trimesh2open3d(ellipsoid_mesh)
