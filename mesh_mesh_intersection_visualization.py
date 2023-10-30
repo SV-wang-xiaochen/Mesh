@@ -28,6 +28,23 @@ lens_init_centroid_x = 0
 lens_init_centroid_y = 0
 lens_init_centroid_z = 12
 
+def rotation_matrix_from_vectors(vec1, vec2):
+    """ Find the rotation matrix that aligns vec1 to vec2
+    :param vec1: A 3d "source" vector
+    :param vec2: A 3d "destination" vector
+    :return mat: A transform matrix (3x3) which when applied to vec1, aligns it with vec2.
+    """
+    a, b = (vec1 / np.linalg.norm(vec1)).reshape(3), (vec2 / np.linalg.norm(vec2)).reshape(3)
+    v = np.cross(a, b)
+    if any(v):  # if not all zeros then
+        c = np.dot(a, b)
+        s = np.linalg.norm(v)
+        kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+        return np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2))
+
+    else:
+        return np.eye(3)  # cross of all zeros only occurs on identical directions
+
 
 def angle_between_two_vectors(vec1, vec2):
     """ Calculate the angle between vec1 to vec2
@@ -162,15 +179,28 @@ vertices = np.stack((x.flatten(), y.flatten(), z.flatten()), axis=-1)
 
 # Get the vertices which are within the 15 degree region
 vertices_valid = []
+angles = []
 for sphere_point in vertices:
-    if (angle_between_two_vectors([0,0,1], sphere_point) <= 15 and
-            sphere_point[0]>=0 and sphere_point[2]>=0 and sphere_point[1]<=0):
+    # put only <= 15 degree here after debug
+    if (angle_between_two_vectors([0,0,1], sphere_point) <= 45
+            and angle_between_two_vectors([0,0,1], sphere_point) >= 30
+            and sphere_point[0]>=0 and sphere_point[2]>=0 and sphere_point[1]<=0):
         vertices_valid.append(sphere_point)
 vertices_valid = np.array(vertices_valid)
+print(vertices_valid.shape)
 
 cloud = trimesh.PointCloud(vertices)
 sphere_mesh = cloud.convex_hull
 sphere_mesh.visual.face_colors = [255, 255, 0, 100]
+
+# Rotate lens
+ref_vertex = vertices_valid[0]
+print(f"Before rotation, the angle in degree between ref vertex and lens centroid: {angle_between_two_vectors([0,0,1], ref_vertex)}\n")
+R = rotation_matrix_from_vectors([0,0,1], vertices_valid[0])
+Rotation = np.eye(4)
+Rotation[:3, :3] = R
+
+ellipsoid_mesh.apply_transform(Rotation)
 
 #######################  Translate the coordinates back so that the LeftEyeFront point becomes the origin. #######################
 sphere_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
