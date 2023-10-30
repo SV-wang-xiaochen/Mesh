@@ -8,18 +8,18 @@ LeftEyeRear = 4463
 
 # Define the semi-axes lengths of the ellipsoid lens
 lens_scale = 10
-lens_x = 5 # eye left-right direction
-lens_y = 3 # eye up-down direction
-lens_z = 1 # eye front-rear direction
+lens_semi_x = 5 # eye left-right direction
+lens_semi_y = 3 # eye up-down direction
+lens_semi_z = 1 # eye front-rear direction
 
 # Define the rotation angles in degrees
 angle_x = 15  # Eye up-down Rotation around x-axis, + means down
 angle_y = 0  # Eye left-right Rotation around y-axis, + means left
 
-# Define translation values
-trans_x = 0
-trans_y = 0
-trans_z = 45
+# Define lens centroid
+lens_centroid_x = 0
+lens_centroid_y = 0
+lens_centroid_z = 45
 
 def line_segment_with_circle(line_segment, circle_origin, circle_radius):
     """ Check if a line segment is within a circle. Here the line segment must be within the plane where the circle is within.
@@ -63,17 +63,13 @@ def ellipsoid(a, b, c):
     return x, y, z
 
 # Generate ellipsoid points
-x, y, z = ellipsoid(lens_x*lens_scale/1000, lens_y*lens_scale/1000, lens_z*lens_scale/1000)
+x, y, z = ellipsoid(lens_semi_x*lens_scale/1000, lens_semi_y*lens_scale/1000, lens_semi_z*lens_scale/1000)
 
 # Create a trimesh object from vertices and faces
 vertices = np.stack((x.flatten(), y.flatten(), z.flatten()), axis=-1)
 cloud = trimesh.PointCloud(vertices)
 ellipsoid_mesh = cloud.convex_hull
 ellipsoid_mesh.visual.face_colors = [0, 0, 255, 100]
-
-# plot the lens center point
-origin = trimesh.points.PointCloud(vertices=[[trans_x/1000, trans_y/1000, trans_z/1000]], colors=(0, 255, 0))
-scene.add_geometry(origin)
 
 # Convert degrees to radians
 theta = math.radians(angle_x)
@@ -96,10 +92,14 @@ homogeneous_Rx[:3, :3] = Rx
 homogeneous_Ry = np.eye(4)
 homogeneous_Ry[:3, :3] = Ry
 
-# Create the translation matrix
-translation = np.array([trans_x/1000, trans_y/1000, trans_z/1000])
+# Create the translation matrix for the initial centroid
+translation = np.array([lens_centroid_x/1000, lens_centroid_y/1000, lens_centroid_z/1000])
 homogeneous_translation = np.eye(4)
 homogeneous_translation[:3, 3] = translation
+
+# plot the lens centroid point
+origin = trimesh.points.PointCloud(vertices=[[lens_centroid_x/1000, lens_centroid_y/1000, lens_centroid_z/1000]], colors=(0, 255, 0))
+scene.add_geometry(origin)
 
 # Combine the transformations (order matters)
 # Here, we perform rotation about y first, then about x
