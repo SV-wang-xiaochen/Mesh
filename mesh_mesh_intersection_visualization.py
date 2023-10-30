@@ -108,6 +108,10 @@ combined_transform = np.dot(homogeneous_translation, np.dot(homogeneous_Rx, homo
 # Apply the rotation to the mesh vertices
 ellipsoid_mesh.apply_transform(combined_transform)
 
+# # alternative apply_translation and apply_scale, which is equivalent to apply_transform
+# ellipsoid_mesh.apply_translation([lens_centroid_x/1000, lens_centroid_y/1000, lens_centroid_z/1000])
+# ellipsoid_mesh.apply_scale(5)
+
 scene.add_geometry(ellipsoid_mesh)
 
 scene.show(smooth=False)
