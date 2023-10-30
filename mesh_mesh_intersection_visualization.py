@@ -1,3 +1,4 @@
+import open3d as o3d
 import trimesh
 import glob
 import numpy as np
@@ -21,23 +22,36 @@ lens_centroid_x = 0
 lens_centroid_y = 0
 lens_centroid_z = 45
 
-def line_segment_with_circle(line_segment, circle_origin, circle_radius):
-    """ Check if a line segment is within a circle. Here the line segment must be within the plane where the circle is within.
-        Here we define that if any point of the line segment is within the circle, then True is returned.
-    :param line_segment: line segment [start_point, end_point]
-    :param circle_origin: origin of circle
-    :param circle_radius: radius of circle
-    :return isWithinCircle: Boolean
-    """
 
-    distance1 = np.linalg.norm(line_segment[0] - circle_origin)
-    distance2 = np.linalg.norm(line_segment[1] - circle_origin)
+def ellipsoid(a, b, c):
+    u = np.linspace(0, 2 * np.pi, 100)
+    v = np.linspace(0, np.pi, 50)
+    x = a * np.outer(np.cos(u), np.sin(v))
+    y = b * np.outer(np.sin(u), np.sin(v))
+    z = c * np.outer(np.ones(np.size(u)), np.cos(v))
+    return x, y, z
 
-    # Check if the point is within the circle
-    if distance1 < circle_radius or distance2 < circle_radius:
-        return True
-    else:
-        return False
+
+def trimesh2open3d(mesh):
+    vertices = mesh.vertices
+    faces = mesh.faces
+
+    o3d_mesh = o3d.geometry.TriangleMesh()
+    o3d_mesh.vertices = o3d.utility.Vector3dVector(vertices)
+    o3d_mesh.triangles = o3d.utility.Vector3iVector(faces)
+
+    return o3d_mesh
+
+def o3dTriangleMesh2PointCloud(mesh):
+    # Extract vertices from the TriangleMesh
+    vertices = mesh.vertices
+
+    # Create a new PointCloud using the extracted vertices
+    point_cloud = o3d.geometry.PointCloud()
+    point_cloud.points = o3d.utility.Vector3dVector(vertices)
+
+    return point_cloud
+
 
 path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
 obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
@@ -53,14 +67,6 @@ origin = trimesh.points.PointCloud(vertices=[[0, 0, 0]], colors=(255, 0, 0))
 scene.add_geometry(origin)
 
 # #######################  Create ellipsoid lens #######################
-
-def ellipsoid(a, b, c):
-    u = np.linspace(0, 2 * np.pi, 100)
-    v = np.linspace(0, np.pi, 50)
-    x = a * np.outer(np.cos(u), np.sin(v))
-    y = b * np.outer(np.sin(u), np.sin(v))
-    z = c * np.outer(np.ones(np.size(u)), np.cos(v))
-    return x, y, z
 
 # Generate ellipsoid points
 x, y, z = ellipsoid(lens_semi_x*lens_scale/1000, lens_semi_y*lens_scale/1000, lens_semi_z*lens_scale/1000)
@@ -114,4 +120,17 @@ ellipsoid_mesh.apply_transform(combined_transform)
 
 scene.add_geometry(ellipsoid_mesh)
 
-scene.show(smooth=False)
+# # Visualize the trimesh
+# scene.show(smooth=False)
+
+# #######################  Convert trimesh to open3d mesh #######################
+ellipsoid_mesh_o3d = trimesh2open3d(ellipsoid_mesh)
+mesh_original_o3d = trimesh2open3d(mesh_original)
+ellipsoid_pcl_o3d = o3dTriangleMesh2PointCloud(ellipsoid_mesh_o3d)
+mesh_pcl_o3d = o3dTriangleMesh2PointCloud(mesh_original_o3d)
+
+distances = np.array(ellipsoid_pcl_o3d.compute_point_cloud_distance(mesh_pcl_o3d))
+print(np.max(distances), np.min(distances))
+
+# Visualize the Open3D mesh
+o3d.visualization.draw_geometries([mesh_original_o3d, ellipsoid_mesh_o3d], mesh_show_wireframe=True)
