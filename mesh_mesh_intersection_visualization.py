@@ -142,8 +142,8 @@ vertices_valid = []
 angles = []
 for sphere_point in vertices:
     # put only <= 15 degree here after debug
-    if (angle_between_two_vectors([0,0,1], sphere_point) <= 45
-            and angle_between_two_vectors([0,0,1], sphere_point) >= 30
+    if (angle_between_two_vectors([0,0,1], sphere_point) <= 15
+            and angle_between_two_vectors([0,0,1], sphere_point) >= 0
             and sphere_point[0]>=0 and sphere_point[2]>=0 and sphere_point[1]<=0):
         vertices_valid.append(sphere_point)
 vertices_valid = np.array(vertices_valid)
@@ -154,9 +154,10 @@ sphere_mesh = cloud.convex_hull
 sphere_mesh.visual.face_colors = [255, 255, 0, 100]
 
 # Rotate lens
-ref_vertex = vertices_valid[0]
+ref_vertex_index = 188
+ref_vertex = vertices_valid[ref_vertex_index]
 print(f"Before rotation, the angle in degree between ref vertex and lens centroid: {angle_between_two_vectors([0,0,1], ref_vertex)}\n")
-R = rotation_matrix_from_vectors([0,0,1], vertices_valid[0])
+R = rotation_matrix_from_vectors([0,0,1], vertices_valid[ref_vertex_index])
 Rotation = np.eye(4)
 Rotation[:3, :3] = R
 
@@ -167,6 +168,11 @@ sphere_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_b
 scene.add_geometry(sphere_mesh)
 lens_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
 scene.add_geometry(lens_mesh)
+
+# plot the center of lens
+lens_center = trimesh.points.PointCloud(vertices=[vertices_valid[ref_vertex_index]+eye_ball_centroid], colors=(255, 0, 0))
+
+scene.add_geometry(lens_center)
 
 # Visualize the trimesh
 scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
