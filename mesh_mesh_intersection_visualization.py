@@ -6,7 +6,7 @@ import math
 
 
 SHOW_WIREFRAME = False
-ONLY_SHOW_INTERSECTION = True
+ONLY_SHOW_INTERSECTION = False
 
 MESH_NR = 0
 LeftEyeFront = 4043
@@ -16,6 +16,7 @@ ref_vertex_index = 188
 eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 lens_init_centroid_z = 12
+lens_scale = 1 # When scale is 1, the diameter of the lens is around 54 mm
 
 # # Define the semi-axes lengths of the ellipsoid lens
 # lens_scale = 10
@@ -128,6 +129,11 @@ lens_mesh_original.visual.face_colors = [64, 64, 64, 100]
 # cut the lens at the top and bottom
 lens_mesh = trimesh.intersections.slice_mesh_plane(trimesh.intersections.slice_mesh_plane(lens_mesh_original,
 [0,-1,0], [0,lens_half_height_after_cut/1000,0]),[0,1,0], [0,-lens_half_height_after_cut/1000,0])
+
+# scale the lens
+lens_mesh.apply_translation([0, 0, -lens_init_centroid_z/1000])
+lens_mesh.apply_scale(lens_scale)
+lens_mesh.apply_translation([0, 0, lens_init_centroid_z/1000])
 
 # Translate the coordinates so that the centroid of eye ball becomes the origin
 lens_mesh.apply_translation([-eye_ball_centroid[0], -eye_ball_centroid[1], -eye_ball_centroid[2]])
