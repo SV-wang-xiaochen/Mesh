@@ -2,7 +2,7 @@ import open3d as o3d
 import trimesh
 import glob
 import numpy as np
-import math
+import matplotlib.pyplot as plt
 
 
 SHOW_WIREFRAME = False
@@ -12,7 +12,7 @@ MESH_NR = 0
 LeftEyeFront = 4043
 LeftEyeRear = 4463
 
-ref_vertex_index = 188
+ref_vertex_index = 0
 eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 lens_init_centroid_z = 12
@@ -74,8 +74,8 @@ def angle_between_two_vectors(vec1, vec2):
 
 
 def ellipsoid(a, b, c):
-    u = np.linspace(0, 2 * np.pi, 100)
-    v = np.linspace(0, np.pi, 50)
+    u = np.linspace(0, 2 * np.pi, 400)
+    v = np.linspace(0, np.pi, 200)
     x = a * np.outer(np.cos(u), np.sin(v))
     y = b * np.outer(np.sin(u), np.sin(v))
     z = c * np.outer(np.ones(np.size(u)), np.cos(v))
@@ -159,12 +159,34 @@ for sphere_point in vertices:
 vertices_valid = np.array(vertices_valid)
 print(vertices_valid.shape)
 
+# Plot 3d points from vertices_valid. Color with the value of head hit.
+x = vertices_valid[:, 0]*1000
+y = vertices_valid[:, 1]*1000
+z = vertices_valid[:, 2]*1000
+
+# Create a 3D plot
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+# Plot the points
+colors = x # placeholder, later replace with the value of head hit.
+ax.scatter(x, y, z, c=x, cmap='viridis', marker='o')
+
+# Set labels
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+
+# Show the plot
+plt.show()
+
 cloud = trimesh.PointCloud(vertices)
 sphere_mesh = cloud.convex_hull
 sphere_mesh.visual.face_colors = [255, 255, 0, 100]
 
 # Rotate lens
 ref_vertex = vertices_valid[ref_vertex_index]
+print(ref_vertex)
 print(f"Before rotation, the angle in degree between ref vertex and lens centroid: {angle_between_two_vectors([0,0,1], ref_vertex)}\n")
 R = rotation_matrix_from_vectors([0,0,1], vertices_valid[ref_vertex_index])
 Rotation = np.eye(4)
@@ -179,7 +201,7 @@ lens_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_bal
 if not ONLY_SHOW_INTERSECTION:
     scene.add_geometry(lens_mesh)
 
-# chceck intersection between lens_mesh and mesh_original
+# check intersection between lens_mesh and mesh_original
 intersections = trimesh.boolean.intersection([lens_mesh, mesh_original], engine='blender')
 if hasattr(intersections, 'vertices'):
     print("intersected")
