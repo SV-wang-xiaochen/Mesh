@@ -156,40 +156,92 @@ import numpy as np
 # scene = trimesh.scene.Scene([mesh])
 # scene.show(smooth=False)
 
-import open3d as o3d
+# # import open3d as o3d
+# # import numpy as np
+# #
+# # def ellipsoid(a, b, c):
+# #     u = np.linspace(0, 2 * np.pi, 100)
+# #     v = np.linspace(0, np.pi, 50)
+# #     x = a * np.outer(np.cos(u), np.sin(v))
+# #     y = b * np.outer(np.sin(u), np.sin(v))
+# #     z = c * np.outer(np.ones(np.size(u)), np.cos(v))
+# #     return x, y, z
+# #
+# # # Define the semi-axes lengths of the ellipsoid
+# # a, b, c = 3, 5, 2
+#
+# # Generate ellipsoid points
+# x, y, z = ellipsoid(a, b, c)
+#
+# # Combine the points into a single point cloud
+# points = np.stack((x.flatten(), y.flatten(), z.flatten()), axis=-1)
+# # Create an Open3D point cloud
+# point_cloud = o3d.geometry.PointCloud()
+# point_cloud.points = o3d.utility.Vector3dVector(points)
+# # point_cloud = point_cloud.compute_convex_hull()
+#
+# o3d.io.write_point_cloud("ellipsoid.ply", point_cloud)
+#
+# # # print(point_cloud)
+# # # # print(a)
+# # # # print(point_cloud.points)
+# # # # # Create a mesh from the point cloud
+# # mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(point_cloud)
+# # # #
+# #
+# #
+# # # mesh = o3d.geometry.TriangleMesh.create_sphere(radius=1.0, resolution=20)
+# # # # Visualize the mesh
+# # o3d.visualization.draw_geometries([mesh])
+#
+# import open3d as o3d
+# import trimesh
+# import glob
+# import numpy as np
+# import math
+#
+# lens_path = r'C:\Users\xiaochen.wang\Projects\Dataset\lens_original.obj'
+# mesh = trimesh.load_mesh(lens_path)
+# # mesh.visual.face_colors = [64, 64, 64, 100]
+#
+# scene = trimesh.Scene()
+#
+# scene.add_geometry(mesh)
+#
+# print(mesh.vertices[231])
+#
+# mesh.apply_translation(-mesh.vertices[231])
+#
+# mesh.apply_translation([0, 0, 0.012])
+#
+# output_file_path = 'path_to_save_new_mesh.obj'  # Provide the desired file path to save the updated mesh
+#
+# mesh.export(output_file_path)  # Export the mesh to the specified file path
+
+
+# import open3d as o3d
+# import glob
+#
+# def main():
+#     path = r'C:\Users\xiaochen.wang\Projects\Dataset\lens.obj'
+#
+#     mesh = o3d.io.read_triangle_mesh(path)
+#
+#     o3d.io.write_triangle_mesh(path, mesh)
+#
+# if __name__ == "__main__":
+#     main()
+
+
+import pyvista as pv
 import numpy as np
-
-def ellipsoid(a, b, c):
-    u = np.linspace(0, 2 * np.pi, 100)
-    v = np.linspace(0, np.pi, 50)
-    x = a * np.outer(np.cos(u), np.sin(v))
-    y = b * np.outer(np.sin(u), np.sin(v))
-    z = c * np.outer(np.ones(np.size(u)), np.cos(v))
-    return x, y, z
-
-# Define the semi-axes lengths of the ellipsoid
-a, b, c = 3, 5, 2
-
-# Generate ellipsoid points
-x, y, z = ellipsoid(a, b, c)
-
-# Combine the points into a single point cloud
-points = np.stack((x.flatten(), y.flatten(), z.flatten()), axis=-1)
-# Create an Open3D point cloud
-point_cloud = o3d.geometry.PointCloud()
-point_cloud.points = o3d.utility.Vector3dVector(points)
-# point_cloud = point_cloud.compute_convex_hull()
-
-o3d.io.write_point_cloud("ellipsoid.ply", point_cloud)
-
-# # print(point_cloud)
-# # # print(a)
-# # # print(point_cloud.points)
-# # # # Create a mesh from the point cloud
-# mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(point_cloud)
-# # #
-#
-#
-# # mesh = o3d.geometry.TriangleMesh.create_sphere(radius=1.0, resolution=20)
-# # # Visualize the mesh
-# o3d.visualization.draw_geometries([mesh])
+s1 = pv.Sphere(phi_resolution=15, theta_resolution=15)
+print(s1)
+# s2 = s1.copy()
+# s2.points += np.array([0.25, 0, 0])
+# intersection, s1_split, s2_split = s1.intersection(s2)
+# pl = pv.Plotter()
+# _ = pl.add_mesh(s1, style='wireframe')
+# _ = pl.add_mesh(s2, style='wireframe')
+# _ = pl.add_mesh(intersection, color='r', line_width=10)
+# pl.show()

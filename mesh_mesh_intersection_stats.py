@@ -74,8 +74,8 @@ def angle_between_two_vectors(vec1, vec2):
 
 
 def ellipsoid(a, b, c):
-    u = np.linspace(0, 2 * np.pi, 4)
-    v = np.linspace(0, np.pi, 2)
+    u = np.linspace(0, 2 * np.pi, 100)
+    v = np.linspace(0, np.pi, 50)
     x = a * np.outer(np.cos(u), np.sin(v))
     y = b * np.outer(np.sin(u), np.sin(v))
     z = c * np.outer(np.ones(np.size(u)), np.cos(v))
@@ -144,19 +144,21 @@ for mesh_nr in range(0, 2):
     # Get the vertices which are within the 15 degree region
     if mesh_nr == 0:
         vertices_valid = []
-    count_hit = 0
+    valid_point_index = 0
+    print(f"all vertices: {len(vertices)} ")
     for vertices_index, sphere_point in enumerate(vertices):
         # put only <= 15 degree here after debug
         if (angle_between_two_vectors([0,0,1], sphere_point) <= 15
                 and angle_between_two_vectors([0,0,1], sphere_point) >= 0
                 and sphere_point[0]>=0 and sphere_point[2]>=0 and sphere_point[1]<=0):
+            print(f"vertices {vertices_index} is valid")
             if mesh_nr == 0:
                 vertices_valid.append(sphere_point)
 
             # Rotate lens
             ref_vertex = sphere_point
             print(f"Before rotation, the angle in degree between ref vertex and lens centroid: {angle_between_two_vectors([0,0,1], ref_vertex)}\n")
-            R = rotation_matrix_from_vectors([0,0,1], vertices_valid[ref_vertex_index])
+            R = rotation_matrix_from_vectors([0,0,1], ref_vertex)
             Rotation = np.eye(4)
             Rotation[:3, :3] = R
 
@@ -168,10 +170,13 @@ for mesh_nr in range(0, 2):
             if hasattr(intersections, 'vertices'):
                 print(f"Head {mesh_nr}, Vertices {vertices_index}/{len(vertices)}")
                 print("intersected")
-                head_hits[count_hit] += 1
-                count_hit +=1
+                head_hits[valid_point_index] += 1
             else:
+                print(f"Head {mesh_nr}, Vertices {vertices_index}/{len(vertices)}")
                 print("NOT intersected")
+            valid_point_index += 1
+        else:
+            print(f"vertices {vertices_index} is NOT valid")
     if mesh_nr == 0:
         vertices_valid = np.array(vertices_valid)
         print(vertices_valid.shape)
