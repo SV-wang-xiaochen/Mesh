@@ -11,22 +11,24 @@ MESH_NR = 0
 LeftEyeFront = 4043
 LeftEyeRear = 4463
 
+ref_vertex_index = 188
 eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
-
-# Define the semi-axes lengths of the ellipsoid lens
-lens_scale = 10
-lens_semi_x = 3 # eye left-right direction
-lens_semi_y = 3 # eye up-down direction
-lens_semi_z = 0.1 # eye front-rear direction
-
-# Define the rotation angles in degrees
-angle_x = 0  # Eye up-down Rotation around x-axis, + means down
-angle_y = 0  # Eye left-right Rotation around y-axis, + means left
-
-# Define lens centroid
-lens_init_centroid_x = 0
-lens_init_centroid_y = 0
+lens_height_after_cut = 22
 lens_init_centroid_z = 12
+
+# # Define the semi-axes lengths of the ellipsoid lens
+# lens_scale = 10
+# lens_semi_x = 3 # eye left-right direction
+# lens_semi_y = 3 # eye up-down direction
+# lens_semi_z = 0.1 # eye front-rear direction
+#
+# # Define the rotation angles in degrees
+# angle_x = 0  # Eye up-down Rotation around x-axis, + means down
+# angle_y = 0  # Eye left-right Rotation around y-axis, + means left
+#
+# # Define lens centroid
+# lens_init_centroid_x = 0
+# lens_init_centroid_y = 0
 
 def rotation_matrix_from_vectors(vec1, vec2):
     """ Find the rotation matrix that aligns vec1 to vec2
@@ -119,16 +121,17 @@ scene.add_geometry(eye_ball_key_points)
 # #######################  Load lens mesh #######################
 
 lens_path = r'C:\Users\xiaochen.wang\Projects\Dataset\lens_z12.obj'
-lens_mesh = trimesh.load_mesh(lens_path)
-lens_mesh.visual.face_colors = [64, 64, 64, 100]
+lens_mesh_original = trimesh.load_mesh(lens_path)
+lens_mesh_original.visual.face_colors = [64, 64, 64, 100]
 
-#######################  Translate the coordinates so that the centroid of eye ball becomes the origin. #######################
+# cut the lens at the top and bottom
+lens_mesh = trimesh.intersections.slice_mesh_plane(trimesh.intersections.slice_mesh_plane(lens_mesh_original,
+[0,-1,0], [0,lens_height_after_cut/1000,0]),[0,1,0], [0,-lens_height_after_cut/1000,0])
+
+# Translate the coordinates so that the centroid of eye ball becomes the origin
 lens_mesh.apply_translation([-eye_ball_centroid[0], -eye_ball_centroid[1], -eye_ball_centroid[2]])
 
-############### do 15 degree rotation here ################
-
-# #######################  Create 3d sphere, which is the region where centroid of the lens could be located #######################
-
+# Create 3d sphere, which is the region where centroid of the lens could be located
 sphere_radius = lens_init_centroid_z/1000-eye_ball_centroid[2]
 
 # Generate sphere points
@@ -154,7 +157,6 @@ sphere_mesh = cloud.convex_hull
 sphere_mesh.visual.face_colors = [255, 255, 0, 100]
 
 # Rotate lens
-ref_vertex_index = 188
 ref_vertex = vertices_valid[ref_vertex_index]
 print(f"Before rotation, the angle in degree between ref vertex and lens centroid: {angle_between_two_vectors([0,0,1], ref_vertex)}\n")
 R = rotation_matrix_from_vectors([0,0,1], vertices_valid[ref_vertex_index])
@@ -163,7 +165,7 @@ Rotation[:3, :3] = R
 
 lens_mesh.apply_transform(Rotation)
 
-#######################  Translate the coordinates back so that the LeftEyeFront point becomes the origin. #######################
+# Translate the coordinates back so that the LeftEyeFront point becomes the origin
 sphere_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
 scene.add_geometry(sphere_mesh)
 lens_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
