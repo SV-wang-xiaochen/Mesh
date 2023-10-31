@@ -6,6 +6,7 @@ import math
 
 
 SHOW_WIREFRAME = False
+ONLY_SHOW_INTERSECTION = True
 
 MESH_NR = 0
 LeftEyeFront = 4043
@@ -13,7 +14,7 @@ LeftEyeRear = 4463
 
 ref_vertex_index = 188
 eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
-lens_height_after_cut = 22
+lens_half_height_after_cut = 22
 lens_init_centroid_z = 12
 
 # # Define the semi-axes lengths of the ellipsoid lens
@@ -126,7 +127,7 @@ lens_mesh_original.visual.face_colors = [64, 64, 64, 100]
 
 # cut the lens at the top and bottom
 lens_mesh = trimesh.intersections.slice_mesh_plane(trimesh.intersections.slice_mesh_plane(lens_mesh_original,
-[0,-1,0], [0,lens_height_after_cut/1000,0]),[0,1,0], [0,-lens_height_after_cut/1000,0])
+[0,-1,0], [0,lens_half_height_after_cut/1000,0]),[0,1,0], [0,-lens_half_height_after_cut/1000,0])
 
 # Translate the coordinates so that the centroid of eye ball becomes the origin
 lens_mesh.apply_translation([-eye_ball_centroid[0], -eye_ball_centroid[1], -eye_ball_centroid[2]])
@@ -169,7 +170,17 @@ lens_mesh.apply_transform(Rotation)
 sphere_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
 scene.add_geometry(sphere_mesh)
 lens_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
-scene.add_geometry(lens_mesh)
+if not ONLY_SHOW_INTERSECTION:
+    scene.add_geometry(lens_mesh)
+
+# chceck intersection between lens_mesh and mesh_original
+intersections = trimesh.boolean.intersection([lens_mesh, mesh_original], engine='blender')
+if hasattr(intersections, 'vertices'):
+    print("intersected")
+else:
+    print("NOT intersected")
+
+scene.add_geometry(intersections)
 
 # plot the center of lens
 lens_center = trimesh.points.PointCloud(vertices=[vertices_valid[ref_vertex_index]+eye_ball_centroid], colors=(255, 0, 0))
