@@ -3,16 +3,23 @@ import trimesh
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-
+import copy
 
 SHOW_WIREFRAME = False
 ONLY_SHOW_INTERSECTION = False
+NOT_SHOW_MESH = False # Do not show any mesh. Only show the intersection and lens
+SHOW_FULL_MESH = True # Show full mesh or ONLY "mesh of interest" which is used to find the intersection with lens plane
 
-MESH_NR = 0
+MESH_NR = 29
 LeftEyeFront = 4043
 LeftEyeRear = 4463
+Head1 = 1726
+Head2 = 1335
+Head3 = 1203
+MOUTH_ABOVE = 825
+BROW_ABOVE = 2295
 
-ref_vertex_index = 0
+ref_vertex_index = 5031
 eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 lens_init_centroid_z = 12
@@ -74,8 +81,8 @@ def angle_between_two_vectors(vec1, vec2):
 
 
 def ellipsoid(a, b, c):
-    u = np.linspace(0, 2 * np.pi, 400)
-    v = np.linspace(0, np.pi, 200)
+    u = np.linspace(0, 2 * np.pi, 75)
+    v = np.linspace(0, np.pi, 75)
     x = a * np.outer(np.cos(u), np.sin(v))
     y = b * np.outer(np.sin(u), np.sin(v))
     z = c * np.outer(np.ones(np.size(u)), np.cos(v))
@@ -112,13 +119,45 @@ mesh_original.visual.face_colors = [64, 64, 64, 100]
 
 scene = trimesh.Scene()
 
-scene.add_geometry(mesh_original)
-
 # plot the LeftEyeFront/LeftEyeRear/centroid point
 eye_ball_key_points = trimesh.points.PointCloud(vertices=[mesh_original.vertices[LeftEyeFront], mesh_original.vertices[LeftEyeRear],
                                                 eye_ball_centroid], colors=(255, 0, 0))
 
 scene.add_geometry(eye_ball_key_points)
+
+mesh = copy.deepcopy(mesh_original)
+
+####################### remove unrelated mesh #######################
+x1 = (mesh.vertices[Head1][0] + mesh.vertices[Head2][0] + mesh.vertices[Head3][0])/3
+y1 = mesh.vertices[MOUTH_ABOVE][1]
+y2 = mesh.vertices[BROW_ABOVE][1]
+z1 = mesh.vertices[LeftEyeRear][2]
+
+vertices = mesh.vertices
+vertices_mask = vertices[:,0] > x1
+face_mask = vertices_mask[mesh.faces].all(axis=1)
+mesh.update_faces(face_mask)
+
+vertices = mesh.vertices
+vertices_mask = vertices[:,1] < y2
+face_mask = vertices_mask[mesh.faces].all(axis=1)
+mesh.update_faces(face_mask)
+
+vertices = mesh.vertices
+vertices_mask = vertices[:,1] > y1
+face_mask = vertices_mask[mesh.faces].all(axis=1)
+mesh.update_faces(face_mask)
+
+vertices = mesh.vertices
+vertices_mask = vertices[:,2] > z1
+face_mask = vertices_mask[mesh.faces].all(axis=1)
+mesh.update_faces(face_mask)
+
+if not NOT_SHOW_MESH:
+    if SHOW_FULL_MESH:
+        scene.add_geometry(mesh_original)
+    else:
+        scene.add_geometry(mesh)
 
 # #######################  Load lens mesh #######################
 
@@ -146,49 +185,28 @@ x, y, z = ellipsoid(sphere_radius, sphere_radius, sphere_radius)
 
 # Create a trimesh object from vertices and faces
 vertices = np.stack((x.flatten(), y.flatten(), z.flatten()), axis=-1)
-
+print(f"vertices:{len(vertices)}")
 # Get the vertices which are within the 15 degree region
 vertices_valid = []
 angles = []
 for sphere_point in vertices:
     # put only <= 15 degree here after debug
     if (angle_between_two_vectors([0,0,1], sphere_point) <= 15
-            and angle_between_two_vectors([0,0,1], sphere_point) >= 0
+            and angle_between_two_vectors([0,0,1], sphere_point) > 0
             and sphere_point[0]>=0 and sphere_point[2]>=0 and sphere_point[1]<=0):
         vertices_valid.append(sphere_point)
 vertices_valid = np.array(vertices_valid)
 print(vertices_valid.shape)
-
-# Plot 3d points from vertices_valid. Color with the value of head hit.
-x = vertices_valid[:, 0]*1000
-y = vertices_valid[:, 1]*1000
-z = vertices_valid[:, 2]*1000
-
-# Create a 3D plot
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-
-# Plot the points
-colors = x # placeholder, later replace with the value of head hit.
-ax.scatter(x, y, z, c=x, cmap='viridis', marker='o')
-
-# Set labels
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
-
-# Show the plot
-plt.show()
 
 cloud = trimesh.PointCloud(vertices)
 sphere_mesh = cloud.convex_hull
 sphere_mesh.visual.face_colors = [255, 255, 0, 100]
 
 # Rotate lens
-ref_vertex = vertices_valid[ref_vertex_index]
+ref_vertex = vertices[ref_vertex_index]
 print(ref_vertex)
 print(f"Before rotation, the angle in degree between ref vertex and lens centroid: {angle_between_two_vectors([0,0,1], ref_vertex)}\n")
-R = rotation_matrix_from_vectors([0,0,1], vertices_valid[ref_vertex_index])
+R = rotation_matrix_from_vectors([0,0,1], ref_vertex)
 Rotation = np.eye(4)
 Rotation[:3, :3] = R
 
@@ -196,22 +214,25 @@ lens_mesh.apply_transform(Rotation)
 
 # Translate the coordinates back so that the LeftEyeFront point becomes the origin
 sphere_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
-scene.add_geometry(sphere_mesh)
+# scene.add_geometry(sphere_mesh)
 lens_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
 if not ONLY_SHOW_INTERSECTION:
     scene.add_geometry(lens_mesh)
 
+import time
+start = time.time()
 # check intersection between lens_mesh and mesh_original
 intersections = trimesh.boolean.intersection([lens_mesh, mesh_original], engine='blender')
 if hasattr(intersections, 'vertices'):
     print("intersected")
 else:
     print("NOT intersected")
-
+end = time.time()
+print(end-start)
 scene.add_geometry(intersections)
 
 # plot the center of lens
-lens_center = trimesh.points.PointCloud(vertices=[vertices_valid[ref_vertex_index]+eye_ball_centroid], colors=(255, 0, 0))
+lens_center = trimesh.points.PointCloud(vertices=[ref_vertex+eye_ball_centroid], colors=(255, 0, 0))
 
 scene.add_geometry(lens_center)
 
