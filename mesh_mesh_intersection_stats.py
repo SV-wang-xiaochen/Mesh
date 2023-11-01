@@ -3,7 +3,7 @@ import trimesh
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-import time
+import copy
 
 SHOW_WIREFRAME = False
 ONLY_SHOW_INTERSECTION = False
@@ -16,7 +16,7 @@ ref_vertex_index = 0
 eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 lens_init_centroid_z = 12
-lens_scale_list = [0.5, 0.6, 0.7, 0.8, 0.9, 1] # When scale is 1, the diameter of the lens is around 54 mm
+lens_scale_list = [1] # When scale is 1, the diameter of the lens is around 54 mm
 
 def rotation_matrix_from_vectors(vec1, vec2):
     """ Find the rotation matrix that aligns vec1 to vec2
@@ -108,13 +108,12 @@ for lens_scale in lens_scale_list:
     # Translate the coordinates so that the centroid of eye ball becomes the origin
     lens_mesh.apply_translation([-eye_ball_centroid[0], -eye_ball_centroid[1], -eye_ball_centroid[2]])
 
-
     path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
     obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 
     head_hits = np.zeros(5000) # this value only works when len(vertices_valid) <= 5000
 
-    for mesh_nr in range(0, 2):
+    for mesh_nr in range(0, len(obj_list)):
 
         mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
 
@@ -137,8 +136,8 @@ for lens_scale in lens_scale_list:
         for vertices_index, sphere_point in enumerate(vertices):
             # put only <= 15 degree here after debug
             if (angle_between_two_vectors([0,0,1], sphere_point) <= 15
-                    and angle_between_two_vectors([0,0,1], sphere_point) >= 0
-                    and sphere_point[0]>0 and sphere_point[2]>0 and sphere_point[1]<0):
+                    and angle_between_two_vectors([0,0,1], sphere_point) > 0
+                    and sphere_point[0]>=0 and sphere_point[2]>=0 and sphere_point[1]<=0):
                 print(f"lens scale {lens_scale}, vertices {vertices_index} is valid")
                 if mesh_nr == 0:
                     vertices_valid.append(sphere_point)
@@ -151,12 +150,14 @@ for lens_scale in lens_scale_list:
                 Rotation = np.eye(4)
                 Rotation[:3, :3] = R
 
-                lens_mesh.apply_transform(Rotation)
+                lens_mesh_ready = copy.deepcopy(lens_mesh)
 
-                lens_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
+                lens_mesh_ready.apply_transform(Rotation)
+
+                lens_mesh_ready.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
 
                 # check intersection between lens_mesh and mesh_original
-                intersections = trimesh.boolean.intersection([lens_mesh, mesh_original], engine='blender')
+                intersections = trimesh.boolean.intersection([lens_mesh_ready, mesh_original], engine='blender')
                 if hasattr(intersections, 'vertices'):
                     print(f"Head {mesh_nr}, Vertices {vertices_index}/{len(vertices)}")
                     print("intersected\n")
