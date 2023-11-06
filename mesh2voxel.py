@@ -3,6 +3,19 @@ import numpy as np
 from bottom_vertex_index import bottom_vertex_index
 import glob
 
+import random
+
+
+def generate_random_color():
+    # Generate random values for red, green, and blue components
+    r = random.randint(0, 255)
+    g = random.randint(0, 255)
+    b = random.randint(0, 255)
+
+    # Create the color list in the specified format [r, g, b, 100]
+    color = [r, g, b, 100]
+    return color
+
 MESH_NR = 0
 path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
 obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
@@ -38,7 +51,7 @@ for mesh_nr in range(0, 10):
     b = voxelized_mesh.points
     # print(b)
 
-    head_pcl = trimesh.PointCloud(vertices=b, colors = [64,0,0,100])
+    head_pcl = trimesh.PointCloud(vertices=b, colors = generate_random_color())
     scene.add_geometry(head_pcl)
 
 # print(voxelized_mesh.points.shape)
