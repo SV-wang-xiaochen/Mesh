@@ -25,12 +25,12 @@ Head3 = 1203
 MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 
-num_of_heads = 53
+num_of_heads = 10
 path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
 obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 scene = trimesh.Scene()
 
-PITCH = 0.01
+PITCH = 0.0025
 bound_min = [0, 0, 0]
 bound_max = [0, 0, 0]
 
@@ -185,14 +185,40 @@ for mesh_nr in range(0, num_of_heads):
         # print(index)
         accumulation[index] = accumulation[index]+1
     # print(accumulation)
+# print(accumulation)
 
-colors_list = list(map(lambda x:[round(x/53*255),0,0], accumulation))
+voxel_list_remove_zero = [voxel_list[i] for i in range(len(accumulation)) if accumulation[i] != 0]
+accumulation_remove_zero = [accumulation[i] for i in range(len(accumulation)) if accumulation[i] != 0]
+# print(voxel_list_remove_zero)
+# print(accumulation_remove_zero)
+
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
+# Normalize the values in the list to range between 0 and 1
+norm = mcolors.Normalize(vmin=0, vmax=num_of_heads)
+
+# Create a scalar mappable using the Reds colormap
+alpha_value = 1
+scalar_map = plt.cm.ScalarMappable(cmap='Reds', norm=norm)
+
+# Convert each value in the list to a color using the Reds colormap
+colors_list = [scalar_map.to_rgba(val, alpha_value) for val in accumulation_remove_zero]
+# print(colors_list)
+
+# colors_list = list(map(lambda x:[round(x/num_of_heads*255),0,0], accumulation_remove_zero))
 # colors_list = list(map(lambda x: [255,255,255] if x==[0,0,0] else x, colors_list))
 print('colors')
 print(len(colors_list))
 # V = trimesh.PointCloud(vertices=[[0,0,0.01],[0,0,0.02]], colors=[[255,0,0],[0,255,0]])
-V = trimesh.PointCloud(vertices=voxel_list, colors=colors_list)
+V = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=colors_list)
 # print(voxel_list)
 # print(colors_list)
 scene.add_geometry(V)
 scene.show(smooth=False, flags={'wireframe': False})
+
+np.save(f"num_of_heads_{PITCH}", num_of_heads)
+np.save(f"voxel_center_min_{PITCH}", voxel_center_min)
+np.save(f"voxel_center_max_{PITCH}", voxel_center_max)
+np.save(f"voxel_list_remove_zero_{PITCH}", voxel_list_remove_zero)
+np.save(f"colors_list_{PITCH}", colors_list)
