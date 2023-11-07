@@ -25,7 +25,7 @@ Head3 = 1203
 MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 
-num_of_heads = 10
+num_of_heads = 53
 path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
 obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 scene = trimesh.Scene()
@@ -56,32 +56,6 @@ for mesh_nr in range(0, num_of_heads):
     # Add the new faces to the mesh
     head_mesh.faces = np.append(head_mesh.faces, converted_faces, axis=0)
 
-    ####################### remove unrelated mesh #######################
-    x1 = (head_mesh.vertices[Head1][0] + head_mesh.vertices[Head2][0] + head_mesh.vertices[Head3][0]) / 3
-    y1 = head_mesh.vertices[MOUTH_ABOVE][1]
-    y2 = head_mesh.vertices[BROW_ABOVE][1]
-    z1 = head_mesh.vertices[LeftEyeRear][2]
-
-    vertices = head_mesh.vertices
-    vertices_mask = vertices[:, 0] > x1
-    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
-    head_mesh.update_faces(face_mask)
-
-    vertices = head_mesh.vertices
-    vertices_mask = vertices[:, 1] < y2
-    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
-    head_mesh.update_faces(face_mask)
-
-    vertices = head_mesh.vertices
-    vertices_mask = vertices[:, 1] > y1
-    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
-    head_mesh.update_faces(face_mask)
-
-    vertices = head_mesh.vertices
-    vertices_mask = vertices[:, 2] > z1
-    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
-    head_mesh.update_faces(face_mask)
-
     voxelized_mesh = head_mesh.voxelized(PITCH)
 
     voxelized_mesh.fill()
@@ -89,8 +63,8 @@ for mesh_nr in range(0, num_of_heads):
     bound_min = np.minimum(bound_min, voxelized_mesh.bounds[0])
     bound_max = np.maximum(bound_max, voxelized_mesh.bounds[1])
 
-    head_pcl = trimesh.PointCloud(vertices=np.array(voxelized_mesh.points), colors = generate_random_color())
-    scene.add_geometry(head_pcl)
+    # head_pcl = trimesh.PointCloud(vertices=np.array(voxelized_mesh.points), colors = generate_random_color())
+    # scene.add_geometry(head_pcl)
 
 voxel_center_min = bound_min + np.array([PITCH/2, PITCH/2, PITCH/2])
 voxel_center_max = bound_max - np.array([PITCH/2, PITCH/2, PITCH/2])
@@ -104,13 +78,9 @@ print(voxel_center_min, voxel_center_max)
 pitch = np.array([PITCH, PITCH, PITCH])
 
 num_voxels = np.around(((voxel_center_max - voxel_center_min) / pitch) + 1).astype(int)
-# num_voxels = np.divide(voxel_center_max - voxel_center_min,pitch) + 1
-# print(type(num_voxels))
-# print((voxel_center_max - voxel_center_min) / pitch + 1)
-# print(num_voxels[1])
+
 # Create a mesh grid for the x, y, z coordinates
 x = np.around(np.linspace(voxel_center_min[0], voxel_center_max[0], num_voxels[0]),4)
-print(voxel_center_min[1],voxel_center_max[1],num_voxels[1])
 y = np.around(np.linspace(voxel_center_min[1], voxel_center_max[1], num_voxels[1]),4)
 z = np.around(np.linspace(voxel_center_min[2], voxel_center_max[2], num_voxels[2]),4)
 # print(x,y,z)
@@ -154,43 +124,35 @@ for mesh_nr in range(0, num_of_heads):
     y2 = head_mesh.vertices[BROW_ABOVE][1]
     z1 = head_mesh.vertices[LeftEyeRear][2]
 
-    vertices = head_mesh.vertices
-    vertices_mask = vertices[:, 0] > x1
-    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
-    head_mesh.update_faces(face_mask)
-
-    vertices = head_mesh.vertices
-    vertices_mask = vertices[:, 1] < y2
-    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
-    head_mesh.update_faces(face_mask)
-
-    vertices = head_mesh.vertices
-    vertices_mask = vertices[:, 1] > y1
-    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
-    head_mesh.update_faces(face_mask)
-
-    vertices = head_mesh.vertices
-    vertices_mask = vertices[:, 2] > z1
-    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
-    head_mesh.update_faces(face_mask)
+    x1_voxel_limit = round(x1 / PITCH) * PITCH
+    y1_voxel_limit = round(y1 / PITCH) * PITCH
+    y2_voxel_limit = round(y2 / PITCH) * PITCH
+    z1_voxel_limit = round(z1 / PITCH) * PITCH
+    print(x1_voxel_limit,y1_voxel_limit,y2_voxel_limit,z1_voxel_limit)
 
     voxelized_mesh = head_mesh.voxelized(PITCH)
 
     voxelized_mesh.fill()
 
-    head_occupancy = np.around(np.array(voxelized_mesh.points),4).tolist()
+    head_voxelization = np.array(voxelized_mesh.points)
+
+    condition = ((head_voxelization[:, 0] > x1_voxel_limit)&(head_voxelization[:, 1] > y1_voxel_limit)
+                 &(head_voxelization[:, 1] < y2_voxel_limit)&(head_voxelization[:, 2] > z1_voxel_limit))
+
+    head_voxelization = head_voxelization[condition]
+
+    # head_pcl = trimesh.PointCloud(vertices=np.array(head_voxelization), colors=generate_random_color())
+    # scene.add_geometry(head_pcl)
+
+    head_occupancy = np.around(head_voxelization,4).tolist()
+
     # print(voxel_list)
     for v in head_occupancy:
         index = voxel_list.index(v)
-        # print(index)
         accumulation[index] = accumulation[index]+1
-    # print(accumulation)
-# print(accumulation)
 
 voxel_list_remove_zero = [voxel_list[i] for i in range(len(accumulation)) if accumulation[i] != 0]
 accumulation_remove_zero = [accumulation[i] for i in range(len(accumulation)) if accumulation[i] != 0]
-# print(voxel_list_remove_zero)
-# print(accumulation_remove_zero)
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
