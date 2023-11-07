@@ -257,18 +257,18 @@ lens_pcl = trimesh.PointCloud(vertices=np.array(lens_voxelization), colors=gener
 if not ONLY_SHOW_INTERSECTION:
     scene.add_geometry(lens_mesh)
 
-import time
-start = time.time()
-# check intersection between lens_mesh and mesh_original
-intersections = trimesh.boolean.intersection([lens_mesh, mesh_original], engine='blender')
-if hasattr(intersections, 'vertices'):
-    print("intersected")
-    intersections.visual.face_colors = [255, 0, 0, 100]
-    scene.add_geometry(intersections)
-else:
-    print("NOT intersected")
-end = time.time()
-print(end-start)
+# import time
+# start = time.time()
+# # check intersection between lens_mesh and mesh_original
+# intersections = trimesh.boolean.intersection([lens_mesh, mesh_original], engine='blender')
+# if hasattr(intersections, 'vertices'):
+#     print("intersected")
+#     intersections.visual.face_colors = [255, 0, 0, 100]
+#     scene.add_geometry(intersections)
+# else:
+#     print("NOT intersected")
+# end = time.time()
+# print(end-start)
 
 # plot the center of lens
 lens_center = trimesh.points.PointCloud(vertices=[ref_vertex+eye_ball_centroid], colors=(255, 0, 0))
@@ -284,6 +284,7 @@ scene_voxel = trimesh.Scene()
 num_of_heads = np.load(f"voxel_results/num_of_heads_{PITCH}.npy")
 voxel_list_remove_zero = np.load(f"voxel_results/voxel_list_remove_zero_{PITCH}.npy")
 colors_list = np.load(f"voxel_results/colors_list_{PITCH}.npy")
+accumulation_remove_zero = np.load(f"voxel_results/accumulation_remove_zero_{PITCH}.npy")
 
 multi_heads = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=colors_list)
 
@@ -304,6 +305,10 @@ for i, row in enumerate(voxel_list):
 
 intersection_voxels = voxel_list_remove_zero[intersection_indices]
 intersection_colors_list = colors_list[intersection_indices]
+head_hits = accumulation_remove_zero[intersection_indices]
+
+print(f'max head_hits:{max(head_hits)}')
+
 intersection_multi_heads = trimesh.PointCloud(vertices=intersection_voxels, colors=intersection_colors_list)
 
 scene_voxel_intersection = trimesh.Scene()
