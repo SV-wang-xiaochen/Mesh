@@ -207,6 +207,20 @@ lens_mesh.apply_translation([0, 0, lens_init_centroid_z/1000])
 # Translate the coordinates so that the centroid of eye ball becomes the origin
 lens_mesh.apply_translation([-eye_ball_centroid[0], -eye_ball_centroid[1], -eye_ball_centroid[2]])
 
+y_angle = 15/180* np.pi
+y_Rotation = np.eye(4)
+y_R = np.array([[np.cos(y_angle), 0, np.sin(y_angle)],
+              [0, 1, 0],
+              [-np.sin(y_angle), 0, np.cos(y_angle)]])
+y_Rotation[:3,:3] = y_R
+
+x_angle = 5/180* np.pi
+x_Rotation = np.eye(4)
+x_R = np.array([[1, 0, 0],
+              [0, np.cos(x_angle), -np.sin(x_angle)],
+              [0, np.sin(x_angle), np.cos(x_angle)]])
+x_Rotation[:3,:3] = x_R
+
 # Create 3d sphere, which is the region where centroid of the lens could be located
 sphere_radius = lens_init_centroid_z/1000-eye_ball_centroid[2]
 
@@ -215,36 +229,17 @@ x, y, z = ellipsoid(sphere_radius, sphere_radius, sphere_radius)
 
 # Create a trimesh object from vertices and faces
 vertices = np.stack((x.flatten(), y.flatten(), z.flatten()), axis=-1)
-print(f"vertices:{len(vertices)}")
-# Get the vertices which are within the 15 degree region
-vertices_valid = []
-angles = []
-for sphere_point in vertices:
-    # put only <= 15 degree here after debug
-    if (angle_between_two_vectors([0,0,1], sphere_point) <= 15
-            and angle_between_two_vectors([0,0,1], sphere_point) > 0
-            and sphere_point[0]>=0 and sphere_point[2]>=0 and sphere_point[1]<=0):
-        vertices_valid.append(sphere_point)
-vertices_valid = np.array(vertices_valid)
-print(vertices_valid.shape)
 
 cloud = trimesh.PointCloud(vertices)
 sphere_mesh = cloud.convex_hull
 sphere_mesh.visual.face_colors = [255, 255, 0, 100]
 
-# Rotate lens
-ref_vertex = vertices[ref_vertex_index]
-print(ref_vertex)
-print(f"Before rotation, the angle in degree between ref vertex and lens centroid: {angle_between_two_vectors([0,0,1], ref_vertex)}\n")
-R = rotation_matrix_from_vectors([0,0,1], ref_vertex)
-Rotation = np.eye(4)
-Rotation[:3, :3] = R
+lens_mesh.apply_transform(y_Rotation)
+lens_mesh.apply_transform(x_Rotation)
 
-lens_mesh.apply_transform(Rotation)
-
-# Translate the coordinates back so that the LeftEyeFront point becomes the origin
+# # Translate the coordinates back so that the LeftEyeFront point becomes the origin
 sphere_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
-# scene.add_geometry(sphere_mesh)
+scene.add_geometry(sphere_mesh)
 lens_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
 
 voxelized_lens = lens_mesh.voxelized(PITCH)
@@ -256,24 +251,6 @@ lens_pcl = trimesh.PointCloud(vertices=np.array(lens_voxelization), colors=gener
 
 if not ONLY_SHOW_INTERSECTION:
     scene.add_geometry(lens_mesh)
-
-# import time
-# start = time.time()
-# # check intersection between lens_mesh and mesh_original
-# intersections = trimesh.boolean.intersection([lens_mesh, mesh_original], engine='blender')
-# if hasattr(intersections, 'vertices'):
-#     print("intersected")
-#     intersections.visual.face_colors = [255, 0, 0, 100]
-#     scene.add_geometry(intersections)
-# else:
-#     print("NOT intersected")
-# end = time.time()
-# print(end-start)
-
-# plot the center of lens
-lens_center = trimesh.points.PointCloud(vertices=[ref_vertex+eye_ball_centroid], colors=(255, 0, 0))
-
-scene.add_geometry(lens_center)
 
 # Visualize the trimesh
 scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
@@ -290,7 +267,6 @@ multi_heads = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=colors_
 
 scene_voxel.add_geometry(eye_ball_key_points)
 scene_voxel.add_geometry(lens_pcl)
-scene_voxel.add_geometry(lens_center)
 scene_voxel.add_geometry(mesh_original)
 
 scene_voxel.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
@@ -314,7 +290,6 @@ intersection_multi_heads = trimesh.PointCloud(vertices=intersection_voxels, colo
 scene_voxel_intersection = trimesh.Scene()
 scene_voxel_intersection.add_geometry(intersection_multi_heads)
 scene_voxel_intersection.add_geometry(eye_ball_key_points)
-scene_voxel_intersection.add_geometry(lens_center)
 scene_voxel_intersection.add_geometry(mesh_original)
 
 path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
