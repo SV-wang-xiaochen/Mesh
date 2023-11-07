@@ -17,17 +17,26 @@ def generate_random_color():
     return color
 
 MESH_NR = 0
+LeftEyeFront = 4043
+LeftEyeRear = 4463
+Head1 = 1726
+Head2 = 1335
+Head3 = 1203
+MOUTH_ABOVE = 825
+BROW_ABOVE = 2295
+
 num_of_heads = 53
 path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
 obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 scene = trimesh.Scene()
 
-PITCH = 0.05
+PITCH = 0.01
 bound_min = [0, 0, 0]
 bound_max = [0, 0, 0]
 
 for mesh_nr in range(0, num_of_heads):
     head_mesh = trimesh.load_mesh(obj_list[mesh_nr])
+
     bottom_vertex = head_mesh.vertices[bottom_vertex_index]
     bottom_vertex_pcl = trimesh.PointCloud(vertices=bottom_vertex)
     hole_boundary_vertices = bottom_vertex
@@ -46,7 +55,33 @@ for mesh_nr in range(0, num_of_heads):
 
     # Add the new faces to the mesh
     head_mesh.faces = np.append(head_mesh.faces, converted_faces, axis=0)
-    # print(head_mesh.is_watertight)
+
+    ####################### remove unrelated mesh #######################
+    x1 = (head_mesh.vertices[Head1][0] + head_mesh.vertices[Head2][0] + head_mesh.vertices[Head3][0]) / 3
+    y1 = head_mesh.vertices[MOUTH_ABOVE][1]
+    y2 = head_mesh.vertices[BROW_ABOVE][1]
+    z1 = head_mesh.vertices[LeftEyeRear][2]
+
+    vertices = head_mesh.vertices
+    vertices_mask = vertices[:, 0] > x1
+    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
+    head_mesh.update_faces(face_mask)
+
+    vertices = head_mesh.vertices
+    vertices_mask = vertices[:, 1] < y2
+    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
+    head_mesh.update_faces(face_mask)
+
+    vertices = head_mesh.vertices
+    vertices_mask = vertices[:, 1] > y1
+    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
+    head_mesh.update_faces(face_mask)
+
+    vertices = head_mesh.vertices
+    vertices_mask = vertices[:, 2] > z1
+    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
+    head_mesh.update_faces(face_mask)
+
     voxelized_mesh = head_mesh.voxelized(PITCH)
 
     voxelized_mesh.fill()
@@ -55,7 +90,7 @@ for mesh_nr in range(0, num_of_heads):
     bound_max = np.maximum(bound_max, voxelized_mesh.bounds[1])
 
     head_pcl = trimesh.PointCloud(vertices=np.array(voxelized_mesh.points), colors = generate_random_color())
-    # scene.add_geometry(head_pcl)
+    scene.add_geometry(head_pcl)
 
 voxel_center_min = bound_min + np.array([PITCH/2, PITCH/2, PITCH/2])
 voxel_center_max = bound_max - np.array([PITCH/2, PITCH/2, PITCH/2])
@@ -91,7 +126,9 @@ print(len(voxel_list))
 accumulation = [0 for _ in range(len(voxel_list))]
 
 for mesh_nr in range(0, num_of_heads):
+    print(f'Mesh number:{mesh_nr}')
     head_mesh = trimesh.load_mesh(obj_list[mesh_nr])
+
     bottom_vertex = head_mesh.vertices[bottom_vertex_index]
     bottom_vertex_pcl = trimesh.PointCloud(vertices=bottom_vertex)
     hole_boundary_vertices = bottom_vertex
@@ -110,7 +147,33 @@ for mesh_nr in range(0, num_of_heads):
 
     # Add the new faces to the mesh
     head_mesh.faces = np.append(head_mesh.faces, converted_faces, axis=0)
-    # print(head_mesh.is_watertight)
+
+    ####################### remove unrelated mesh #######################
+    x1 = (head_mesh.vertices[Head1][0] + head_mesh.vertices[Head2][0] + head_mesh.vertices[Head3][0]) / 3
+    y1 = head_mesh.vertices[MOUTH_ABOVE][1]
+    y2 = head_mesh.vertices[BROW_ABOVE][1]
+    z1 = head_mesh.vertices[LeftEyeRear][2]
+
+    vertices = head_mesh.vertices
+    vertices_mask = vertices[:, 0] > x1
+    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
+    head_mesh.update_faces(face_mask)
+
+    vertices = head_mesh.vertices
+    vertices_mask = vertices[:, 1] < y2
+    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
+    head_mesh.update_faces(face_mask)
+
+    vertices = head_mesh.vertices
+    vertices_mask = vertices[:, 1] > y1
+    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
+    head_mesh.update_faces(face_mask)
+
+    vertices = head_mesh.vertices
+    vertices_mask = vertices[:, 2] > z1
+    face_mask = vertices_mask[head_mesh.faces].all(axis=1)
+    head_mesh.update_faces(face_mask)
+
     voxelized_mesh = head_mesh.voxelized(PITCH)
 
     voxelized_mesh.fill()
@@ -129,7 +192,7 @@ print('colors')
 print(len(colors_list))
 # V = trimesh.PointCloud(vertices=[[0,0,0.01],[0,0,0.02]], colors=[[255,0,0],[0,255,0]])
 V = trimesh.PointCloud(vertices=voxel_list, colors=colors_list)
-print(voxel_list)
-print(colors_list)
+# print(voxel_list)
+# print(colors_list)
 scene.add_geometry(V)
 scene.show(smooth=False, flags={'wireframe': False})
