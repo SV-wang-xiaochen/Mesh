@@ -275,8 +275,8 @@ lens_center = trimesh.points.PointCloud(vertices=[ref_vertex+eye_ball_centroid],
 
 scene.add_geometry(lens_center)
 
-# # Visualize the trimesh
-# scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
+# Visualize the trimesh
+scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
 scene_voxel = trimesh.Scene()
 
@@ -293,7 +293,7 @@ scene_voxel.add_geometry(lens_pcl)
 scene_voxel.add_geometry(lens_center)
 scene_voxel.add_geometry(mesh_original)
 
-# scene_voxel.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
+scene_voxel.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
 voxel_list = voxel_list_remove_zero.tolist()
 lens_list = lens_voxelization.tolist()
@@ -317,6 +317,12 @@ scene_voxel_intersection.add_geometry(eye_ball_key_points)
 scene_voxel_intersection.add_geometry(lens_center)
 scene_voxel_intersection.add_geometry(mesh_original)
 
+path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
+obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
+
+for mesh_nr in range(0, len(obj_list)):
+    mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
+    scene_voxel_intersection.add_geometry(mesh_original)
 scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
 
