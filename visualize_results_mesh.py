@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-a = np.load('results/0.8_new.npy')
+a = np.load('mesh_results/0.8.npy')
 x = a[0]
 y = a[1]
 z = a[2]-13.0439425
