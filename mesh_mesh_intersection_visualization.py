@@ -169,6 +169,9 @@ lens_mesh_original.visual.face_colors = [64, 64, 64, 100]
 lens_mesh = trimesh.intersections.slice_mesh_plane(trimesh.intersections.slice_mesh_plane(lens_mesh_original,
 [0,-1,0], [0,lens_half_height_after_cut/1000,0]),[0,1,0], [0,-lens_half_height_after_cut/1000,0])
 
+# translate the lens between ref 12mm and lens_init_centroid_z
+lens_mesh.apply_translation([0, 0, (lens_init_centroid_z-12)/1000])
+
 # scale the lens
 lens_mesh.apply_translation([0, 0, -lens_init_centroid_z/1000])
 lens_mesh.apply_scale(lens_scale)
