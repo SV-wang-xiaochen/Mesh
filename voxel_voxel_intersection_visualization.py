@@ -322,6 +322,7 @@ obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 
 for mesh_nr in range(0, len(obj_list)):
     mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
+    mesh_original.visual.face_colors = [64, 64, 64, 100]
     scene_voxel_intersection.add_geometry(mesh_original)
 scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
