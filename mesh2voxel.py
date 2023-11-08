@@ -2,7 +2,6 @@ import trimesh
 import numpy as np
 from bottom_vertex_index import bottom_vertex_index
 import glob
-
 import random
 
 
@@ -93,6 +92,12 @@ voxel_list = voxel_grid.reshape(-1, 3).tolist()
 print('voxel_list')
 print(len(voxel_list))
 
+z_step = round((voxel_center_max[2]-voxel_center_min[2])/PITCH+1)
+y_step = round((voxel_center_max[1]-voxel_center_min[1])/PITCH+1)
+
+def voxel2index(v):
+    return round((y_step*z_step*(v[0]-voxel_center_min[0])+z_step*(v[1]-voxel_center_min[1])+(v[2]-voxel_center_min[2]))/PITCH)
+
 accumulation = [0 for _ in range(len(voxel_list))]
 
 for mesh_nr in range(0, num_of_heads):
@@ -146,10 +151,10 @@ for mesh_nr in range(0, num_of_heads):
 
     head_occupancy = np.around(head_voxelization,4).tolist()
 
-    # print(voxel_list)
-    for v in head_occupancy:
-        index = voxel_list.index(v)
-        accumulation[index] = accumulation[index]+1
+    head_occupancy_index_list = list(map(voxel2index, head_occupancy))
+
+    for i in head_occupancy_index_list:
+        accumulation[i] = accumulation[i]+1
 
 voxel_list_remove_zero = [voxel_list[i] for i in range(len(accumulation)) if accumulation[i] != 0]
 accumulation_remove_zero = [accumulation[i] for i in range(len(accumulation)) if accumulation[i] != 0]
