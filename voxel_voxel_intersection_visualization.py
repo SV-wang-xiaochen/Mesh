@@ -27,8 +27,8 @@ PITCH = 0.0025
 ref_vertex_index = 15
 eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
-lens_init_centroid_z = 12   # currently max is 18 when scale is 1, because the lens may be outside the Voxel grid of head
-lens_scale = 0.5 # When scale is 1, the diameter of the lens is around 54 mm
+lens_init_centroid_z = 12
+lens_scale = 1 # When scale is 1, the diameter of the lens is around 54.8 mm
 y_angle = 11 # left-right rotation
 x_angle = 10 # up-down rotation
 
@@ -238,6 +238,11 @@ lens_pcl = trimesh.PointCloud(vertices=np.array(lens_voxelization), colors=[0, 0
 if not ONLY_SHOW_INTERSECTION:
     scene.add_geometry(lens_mesh)
 
+for mesh_nr in range(0, len(obj_list)):
+    mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
+    mesh_original.visual.face_colors = [64, 64, 64, 100]
+    scene.add_geometry(mesh_original)
+
 # Visualize the trimesh
 scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
@@ -270,7 +275,7 @@ intersection_colors_list = colors_list[intersection_indices]
 head_hits = accumulation_remove_zero[intersection_indices]
 
 print(f'distance:{lens_init_centroid_z} mm')
-print(f'lens_scale:{lens_scale}')
+print(f'lens diameter:{lens_scale*54.8} mm')
 print(f'left-right rotation:{y_angle} degrees')
 print(f'up-down rotation:{x_angle} degrees')
 
