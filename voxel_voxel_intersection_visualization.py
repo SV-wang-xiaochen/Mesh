@@ -22,7 +22,7 @@ MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 CUT_LENS = False
 
-PITCH = 0.005
+PITCH = 0.0025
 
 ref_vertex_index = 15
 eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
@@ -207,14 +207,14 @@ lens_mesh.apply_translation([0, 0, lens_init_centroid_z/1000])
 # Translate the coordinates so that the centroid of eye ball becomes the origin
 lens_mesh.apply_translation([-eye_ball_centroid[0], -eye_ball_centroid[1], -eye_ball_centroid[2]])
 
-y_angle = 15/180* np.pi
+y_angle = 11/180* np.pi
 y_Rotation = np.eye(4)
 y_R = np.array([[np.cos(y_angle), 0, np.sin(y_angle)],
               [0, 1, 0],
               [-np.sin(y_angle), 0, np.cos(y_angle)]])
 y_Rotation[:3,:3] = y_R
 
-x_angle = 5/180* np.pi
+x_angle = 14/180* np.pi
 x_Rotation = np.eye(4)
 x_R = np.array([[1, 0, 0],
               [0, np.cos(x_angle), -np.sin(x_angle)],
@@ -247,7 +247,7 @@ voxelized_lens = lens_mesh.voxelized(PITCH)
 voxelized_lens.fill()
 
 lens_voxelization = np.around(np.array(voxelized_lens.points),4)
-lens_pcl = trimesh.PointCloud(vertices=np.array(lens_voxelization), colors=generate_random_color())
+lens_pcl = trimesh.PointCloud(vertices=np.array(lens_voxelization), colors=[0, 0, 255, 100])
 
 if not ONLY_SHOW_INTERSECTION:
     scene.add_geometry(lens_mesh)
@@ -267,7 +267,7 @@ multi_heads = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=colors_
 
 scene_voxel.add_geometry(eye_ball_key_points)
 scene_voxel.add_geometry(lens_pcl)
-scene_voxel.add_geometry(mesh_original)
+scene_voxel.add_geometry(multi_heads)
 
 scene_voxel.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
