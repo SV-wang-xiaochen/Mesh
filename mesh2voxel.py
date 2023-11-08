@@ -34,6 +34,8 @@ bound_min = [0, 0, 0]
 bound_max = [0, 0, 0]
 
 for mesh_nr in range(0, num_of_heads):
+    print('Calculating Bound')
+    print(f'Mesh number:{mesh_nr}')
     head_mesh = trimesh.load_mesh(obj_list[mesh_nr])
 
     bottom_vertex = head_mesh.vertices[bottom_vertex_index]
