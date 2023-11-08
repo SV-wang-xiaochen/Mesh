@@ -22,7 +22,7 @@ MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 CUT_LENS = False
 
-PITCH = 0.0025
+PITCH = 0.001
 
 ref_vertex_index = 15
 eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
@@ -253,6 +253,8 @@ num_of_heads = np.load(f"voxel_results/num_of_heads_{PITCH}.npy")
 voxel_list_remove_zero = np.load(f"voxel_results/voxel_list_remove_zero_{PITCH}.npy")
 colors_list = np.load(f"voxel_results/colors_list_{PITCH}.npy")
 accumulation_remove_zero = np.load(f"voxel_results/accumulation_remove_zero_{PITCH}.npy")
+voxel_center_min = np.load(f"voxel_results/voxel_center_min_{PITCH}.npy")
+voxel_center_max = np.load(f"voxel_results/voxel_center_max_{PITCH}.npy")
 
 multi_heads = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=colors_list)
 
@@ -262,13 +264,19 @@ scene_voxel.add_geometry(multi_heads)
 
 scene_voxel.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
-voxel_list = voxel_list_remove_zero.tolist()
-lens_list = lens_voxelization.tolist()
+z_step = round((voxel_center_max[2]-voxel_center_min[2])/PITCH+1)
+y_step = round((voxel_center_max[1]-voxel_center_min[1])/PITCH+1)
 
-intersection_indices = []
-for i, row in enumerate(voxel_list):
-    if row in lens_list:
-        intersection_indices.append(i)
+def voxel2index(v):
+    return round((y_step*z_step*(v[0]-voxel_center_min[0])+z_step*(v[1]-voxel_center_min[1])+(v[2]-voxel_center_min[2]))/PITCH)
+
+lens_list = lens_voxelization.tolist()
+lens_indices = list(map(voxel2index, lens_list))
+
+voxel_list = voxel_list_remove_zero.tolist()
+head_voxel_indices = list(map(voxel2index, voxel_list))
+
+_, intersection_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(lens_indices), return_indices=True)
 
 intersection_voxels = voxel_list_remove_zero[intersection_indices]
 intersection_colors_list = colors_list[intersection_indices]
@@ -298,9 +306,3 @@ if len(head_hits) > 0:
     scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 else:
     print('NO intersection')
-
-
-
-
-
-
