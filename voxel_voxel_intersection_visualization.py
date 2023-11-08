@@ -22,15 +22,15 @@ MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 CUT_LENS = False
 
-PITCH = 0.001
+PITCH = 0.0005
 
 ref_vertex_index = 15
 eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 lens_init_centroid_z = 12
-lens_scale = 1 # When scale is 1, the diameter of the lens is around 54.8 mm
+lens_scale = 0.9 # When scale is 1, the diameter of the lens is around 54.8 mm
 y_angle = 11 # left-right rotation
-x_angle = 10 # up-down rotation
+x_angle = 14 # up-down rotation
 
 
 def intersection_elements(a, b):
@@ -240,7 +240,7 @@ if not ONLY_SHOW_INTERSECTION:
 
 for mesh_nr in range(0, len(obj_list)):
     mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-    mesh_original.visual.face_colors = [64, 64, 64, 100]
+    mesh_original.visual.face_colors = [64, 64, 64, 50]
     scene.add_geometry(mesh_original)
 
 # Visualize the trimesh
@@ -294,14 +294,13 @@ if len(head_hits) > 0:
     scene_voxel_intersection = trimesh.Scene()
     scene_voxel_intersection.add_geometry(intersection_multi_heads)
     scene_voxel_intersection.add_geometry(eye_ball_key_points)
-    scene_voxel_intersection.add_geometry(mesh_original)
 
     path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
     obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 
     for mesh_nr in range(0, len(obj_list)):
         mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-        mesh_original.visual.face_colors = [64, 64, 64, 100]
+        mesh_original.visual.face_colors = [64, 64, 64, 50]
         scene_voxel_intersection.add_geometry(mesh_original)
     scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 else:
