@@ -28,21 +28,9 @@ ref_vertex_index = 15
 eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 lens_init_centroid_z = 12   # currently max is 18 when scale is 1, because the lens may be outside the Voxel grid of head
-lens_scale = 1 # When scale is 1, the diameter of the lens is around 54 mm
-
-# # Define the semi-axes lengths of the ellipsoid lens
-# lens_scale = 10
-# lens_semi_x = 3 # eye left-right direction
-# lens_semi_y = 3 # eye up-down direction
-# lens_semi_z = 0.1 # eye front-rear direction
-#
-# # Define the rotation angles in degrees
-# angle_x = 0  # Eye up-down Rotation around x-axis, + means down
-# angle_y = 0  # Eye left-right Rotation around y-axis, + means left
-#
-# # Define lens centroid
-# lens_init_centroid_x = 0
-# lens_init_centroid_y = 0
+lens_scale = 0.5 # When scale is 1, the diameter of the lens is around 54 mm
+y_angle = 11 # left-right rotation
+x_angle = 10 # up-down rotation
 
 
 def intersection_elements(a, b):
@@ -207,18 +195,16 @@ lens_mesh.apply_translation([0, 0, lens_init_centroid_z/1000])
 # Translate the coordinates so that the centroid of eye ball becomes the origin
 lens_mesh.apply_translation([-eye_ball_centroid[0], -eye_ball_centroid[1], -eye_ball_centroid[2]])
 
-y_angle = 11/180* np.pi
 y_Rotation = np.eye(4)
-y_R = np.array([[np.cos(y_angle), 0, np.sin(y_angle)],
+y_R = np.array([[np.cos(y_angle/180* np.pi), 0, np.sin(y_angle/180* np.pi)],
               [0, 1, 0],
-              [-np.sin(y_angle), 0, np.cos(y_angle)]])
+              [-np.sin(y_angle/180* np.pi), 0, np.cos(y_angle/180* np.pi)]])
 y_Rotation[:3,:3] = y_R
 
-x_angle = 14/180* np.pi
 x_Rotation = np.eye(4)
 x_R = np.array([[1, 0, 0],
-              [0, np.cos(x_angle), -np.sin(x_angle)],
-              [0, np.sin(x_angle), np.cos(x_angle)]])
+              [0, np.cos(x_angle/180* np.pi), -np.sin(x_angle/180* np.pi)],
+              [0, np.sin(x_angle/180* np.pi), np.cos(x_angle/180* np.pi)]])
 x_Rotation[:3,:3] = x_R
 
 # Create 3d sphere, which is the region where centroid of the lens could be located
@@ -283,23 +269,32 @@ intersection_voxels = voxel_list_remove_zero[intersection_indices]
 intersection_colors_list = colors_list[intersection_indices]
 head_hits = accumulation_remove_zero[intersection_indices]
 
-print(f'max head_hits:{max(head_hits)}')
+print(f'distance:{lens_init_centroid_z} mm')
+print(f'lens_scale:{lens_scale}')
+print(f'left-right rotation:{y_angle} degrees')
+print(f'up-down rotation:{x_angle} degrees')
 
-intersection_multi_heads = trimesh.PointCloud(vertices=intersection_voxels, colors=intersection_colors_list)
+if len(head_hits) > 0:
+    print(f'max head_hits:{max(head_hits)}')
+    intersection_multi_heads = trimesh.PointCloud(vertices=intersection_voxels, colors=intersection_colors_list)
 
-scene_voxel_intersection = trimesh.Scene()
-scene_voxel_intersection.add_geometry(intersection_multi_heads)
-scene_voxel_intersection.add_geometry(eye_ball_key_points)
-scene_voxel_intersection.add_geometry(mesh_original)
-
-path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
-obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
-
-for mesh_nr in range(0, len(obj_list)):
-    mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-    mesh_original.visual.face_colors = [64, 64, 64, 100]
+    scene_voxel_intersection = trimesh.Scene()
+    scene_voxel_intersection.add_geometry(intersection_multi_heads)
+    scene_voxel_intersection.add_geometry(eye_ball_key_points)
     scene_voxel_intersection.add_geometry(mesh_original)
-scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
+
+    path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
+    obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
+
+    for mesh_nr in range(0, len(obj_list)):
+        mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
+        mesh_original.visual.face_colors = [64, 64, 64, 100]
+        scene_voxel_intersection.add_geometry(mesh_original)
+    scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
+else:
+    print('NO intersection')
+
+
 
 
 
