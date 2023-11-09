@@ -2,7 +2,7 @@ import open3d as o3d
 import trimesh
 import glob
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import copy
 import random
 import math
@@ -23,17 +23,20 @@ MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 CUT_LENS = False
 
-PITCH = 0.0005
-
-ref_vertex_index = 15
 eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
-lens_init_centroid_z = 12
-lens_scale = 0.9 # When scale is 1, the diameter of the lens is around 54.8 mm
+
+PITCH = float(input('Size of voxel, e.g. 0.001 means 1mm. Currently, only 0.0005, 0.001, 0.0025, 0.005 allowed:'))
+lens_init_centroid_z = float(input('Initial working distance of lens, e.g. 12 means 12mm. Any positive number:'))
+
+# When scale is 1, the diameter of the lens is around 54.8 mm
+lens_scale = float(input('Default lens diameter is 54.8mm. Input a number to rescale the lens. Any positive number:'))
+print(f'Your lens diameter is {54.8*lens_scale} mm')
 
 # Define the lens rotation by Spherical coordinate system: https://en.wikipedia.org/wiki/Spherical_coordinate_system
-theta = 15 # range[0, 15] degrees
-phi = 0 # range[0, 90] degrees, 0 means pure left, 90 means pure down
+theta = float(input('theta, range[0,15]:'))
+phi = float(input('phi, range[0, 90], 0 means pure left, 90 means pure down:'))
+print('\n')
 
 def intersection_elements(a, b):
     mask = np.isin(b, a).all(axis=1)
@@ -125,7 +128,7 @@ def o3dTriangleMesh2PointCloud(mesh):
     return point_cloud
 
 
-path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
+path = './voxel_results/FLORENCE'
 obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 
 mesh_original = trimesh.load_mesh(obj_list[MESH_NR])
@@ -175,7 +178,7 @@ if not NOT_SHOW_MESH:
 
 # #######################  Load lens mesh #######################
 
-lens_path = r'C:\Users\xiaochen.wang\Projects\Dataset\lens_z12.obj'
+lens_path = './voxel_results/lens_z12.obj'
 lens_mesh_original = trimesh.load_mesh(lens_path)
 lens_mesh_original.visual.face_colors = [64, 64, 64, 100]
 
