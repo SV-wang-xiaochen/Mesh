@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 import random
+import math
 
 
 SHOW_WIREFRAME = False
@@ -29,9 +30,10 @@ eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 Eye
 lens_half_height_after_cut = 22
 lens_init_centroid_z = 12
 lens_scale = 0.9 # When scale is 1, the diameter of the lens is around 54.8 mm
-y_angle = 11 # left-right rotation
-x_angle = 14 # up-down rotation
 
+# Define the lens rotation by Spherical coordinate system: https://en.wikipedia.org/wiki/Spherical_coordinate_system
+theta = 15 # range[0, 15] degrees
+phi = 0 # range[0, 90] degrees, 0 means pure left, 90 means pure down
 
 def intersection_elements(a, b):
     mask = np.isin(b, a).all(axis=1)
@@ -195,17 +197,18 @@ lens_mesh.apply_translation([0, 0, lens_init_centroid_z/1000])
 # Translate the coordinates so that the centroid of eye ball becomes the origin
 lens_mesh.apply_translation([-eye_ball_centroid[0], -eye_ball_centroid[1], -eye_ball_centroid[2]])
 
-y_Rotation = np.eye(4)
-y_R = np.array([[np.cos(y_angle/180* np.pi), 0, np.sin(y_angle/180* np.pi)],
-              [0, 1, 0],
-              [-np.sin(y_angle/180* np.pi), 0, np.cos(y_angle/180* np.pi)]])
-y_Rotation[:3,:3] = y_R
+# Convert Spherical coordinates to Cartesian coordinates
+x = math.sin(theta/180*np.pi)*math.cos(phi/180*np.pi)
+y = -math.sin(theta/180*np.pi)*math.sin(phi/180*np.pi)
+z = math.cos(theta/180*np.pi)
 
-x_Rotation = np.eye(4)
-x_R = np.array([[1, 0, 0],
-              [0, np.cos(x_angle/180* np.pi), -np.sin(x_angle/180* np.pi)],
-              [0, np.sin(x_angle/180* np.pi), np.cos(x_angle/180* np.pi)]])
-x_Rotation[:3,:3] = x_R
+# Calculate the rotation matrix between initial direction vector [0,0,1) and (x,y,z)
+R = rotation_matrix_from_vectors((0,0,1), (x,y,z))
+Rotation = np.eye(4)
+Rotation[:3, :3] = R
+
+# Rotate the lens
+lens_mesh.apply_transform(Rotation)
 
 # Create 3d sphere, which is the region where centroid of the lens could be located
 sphere_radius = lens_init_centroid_z/1000-eye_ball_centroid[2]
@@ -219,9 +222,6 @@ vertices = np.stack((x.flatten(), y.flatten(), z.flatten()), axis=-1)
 cloud = trimesh.PointCloud(vertices)
 sphere_mesh = cloud.convex_hull
 sphere_mesh.visual.face_colors = [255, 255, 0, 100]
-
-lens_mesh.apply_transform(y_Rotation)
-lens_mesh.apply_transform(x_Rotation)
 
 # # Translate the coordinates back so that the LeftEyeFront point becomes the origin
 sphere_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
@@ -284,8 +284,8 @@ head_hits = accumulation_remove_zero[intersection_indices]
 
 print(f'distance:{lens_init_centroid_z} mm')
 print(f'lens diameter:{lens_scale*54.8} mm')
-print(f'left-right rotation:{y_angle} degrees')
-print(f'up-down rotation:{x_angle} degrees')
+print(f'theta:{theta} degrees')
+print(f'phi (left-down):{phi} degrees')
 
 if len(head_hits) > 0:
     print(f'max head_hits:{max(head_hits)}')
