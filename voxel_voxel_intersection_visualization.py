@@ -27,15 +27,14 @@ eye_ball_centroid = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 Eye
 lens_half_height_after_cut = 22
 
 PITCH = float(input('Size of voxel, e.g. 0.001 means 1mm. Currently, only 0.0005, 0.001, 0.0025, 0.005 allowed:'))
-lens_init_centroid_z = float(input('Initial working distance of lens, e.g. 12 means 12mm. Any positive number:'))
+lens_init_centroid_z = float(input('Default working distance of lens, e.g. 12 means 12mm. Range [0,50] mm:'))
 
 # When scale is 1, the diameter of the lens is around 54.8 mm
-lens_scale = float(input('Default lens diameter is 54.8mm. Input a number to rescale the lens. Any positive number:'))
-print(f'Your lens diameter is {54.8*lens_scale} mm')
+lens_diameter = float(input('Lens diameter, e.g. 50 means 50mm. Range [20, 80] mm:'))
 
 # Define the lens rotation by Spherical coordinate system: https://en.wikipedia.org/wiki/Spherical_coordinate_system
-theta = float(input('theta, range[0,15]:'))
-phi = float(input('phi, range[0, 90], 0 means pure left, 90 means pure down:'))
+theta = float(input('Rotation angle, theta. Range[0,15] degrees:'))
+phi = float(input('Rotation direction, phi. Range[0,90] degrees, 0 means pure left, 90 means pure down:'))
 print('\n')
 
 def intersection_elements(a, b):
@@ -194,7 +193,7 @@ lens_mesh.apply_translation([0, 0, (lens_init_centroid_z-12)/1000])
 
 # scale the lens
 lens_mesh.apply_translation([0, 0, -lens_init_centroid_z/1000])
-lens_mesh.apply_scale(lens_scale)
+lens_mesh.apply_scale(lens_diameter/54.8)
 lens_mesh.apply_translation([0, 0, lens_init_centroid_z/1000])
 
 # Translate the coordinates so that the centroid of eye ball becomes the origin
@@ -285,10 +284,11 @@ intersection_voxels = voxel_list_remove_zero[intersection_indices]
 intersection_colors_list = colors_list[intersection_indices]
 head_hits = accumulation_remove_zero[intersection_indices]
 
-print(f'distance:{lens_init_centroid_z} mm')
-print(f'lens diameter:{lens_scale*54.8} mm')
-print(f'theta:{theta} degrees')
-print(f'phi (left-down):{phi} degrees')
+print(f'Size of voxel:{PITCH} mm')
+print(f'Lens working distance:{lens_init_centroid_z} mm')
+print(f'Lens diameter:{lens_diameter} mm')
+print(f'Rotation angle, theta:{theta} degrees')
+print(f'Rotation direction, phi (left-down):{phi} degrees')
 
 if len(head_hits) > 0:
     print(f'max head_hits:{max(head_hits)}')
