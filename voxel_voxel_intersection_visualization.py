@@ -28,10 +28,10 @@ eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBal
 lens_half_height_after_cut = 22
 
 PITCH = float(input('Size of voxel, e.g. 0.001 means 1mm. Currently, only 0.0005, 0.001, 0.0025, 0.005 allowed:')) if INTERACTIVE_INPUT else 0.001
-lens_init_centroid_z = float(input('Default working distance of lens, e.g. 12 means 12mm. Range [0,50] mm:'))  if INTERACTIVE_INPUT else 12
+working_distance = float(input('Default working distance of lens, e.g. 12 means 12mm. Range [0,50] mm:'))  if INTERACTIVE_INPUT else 12
 
 # When scale is 1, the diameter of the lens is around 54.8 mm
-lens_diameter = float(input('Lens diameter, e.g. 50 means 50mm. Range [20, 80] mm:')) if INTERACTIVE_INPUT else 54.8
+lens_diameter = float(input('Lens diameter, e.g. 50 means 50mm. Range [20, 80] mm:')) if INTERACTIVE_INPUT else 50
 
 # Define the lens rotation by Spherical coordinate system: https://en.wikipedia.org/wiki/Spherical_coordinate_system
 theta = float(input('Rotation angle, theta. Range[0,15] degrees:'))  if INTERACTIVE_INPUT else 0
@@ -176,29 +176,19 @@ if not NOT_SHOW_MESH:
     else:
         scene.add_geometry(mesh)
 
-# #######################  Load lens mesh #######################
+# #######################  create cone lens  #######################
 
-lens_path = './voxel_results/lens_z25.obj'
-lens_mesh_original = trimesh.load_mesh(lens_path)
-lens_mesh_original.visual.face_colors = [64, 64, 64, 100]
+cone_lens = trimesh.creation.cone(lens_diameter/2000, -working_distance/1000)
+cone_lens.apply_translation([0, 0, working_distance/1000-eye_ball_shift[2]])
 
-if CUT_LENS:
-    # cut the lens at the top and bottom
-    lens_mesh = trimesh.intersections.slice_mesh_plane(trimesh.intersections.slice_mesh_plane(lens_mesh_original,
-    [0,-1,0], [0,lens_half_height_after_cut/1000,0]),[0,1,0], [0,-lens_half_height_after_cut/1000,0])
-else:
-    lens_mesh = lens_mesh_original
+x_angle = 8 / 180 * np.pi
+x_Rotation = np.eye(4)
+x_R = np.array([[1, 0, 0],
+                [0, np.cos(x_angle), -np.sin(x_angle)],
+                [0, np.sin(x_angle), np.cos(x_angle)]])
+x_Rotation[:3, :3] = x_R
 
-# translate the lens between ref 12mm and lens_init_centroid_z
-lens_mesh.apply_translation([0, 0, (lens_init_centroid_z-12)/1000])
-
-# scale the lens
-lens_mesh.apply_translation([0, 0, -(lens_init_centroid_z-eye_ball_shift[2])/1000])
-lens_mesh.apply_scale(lens_diameter/54.8)
-lens_mesh.apply_translation([0, 0, (lens_init_centroid_z-eye_ball_shift[2])/1000])
-
-# # Translate the coordinates so that the centroid of eye ball becomes the origin
-# lens_mesh.apply_translation([-eye_ball_centroid[0], -eye_ball_centroid[1], -eye_ball_centroid[2]])
+cone_lens.apply_transform(x_Rotation)
 
 # Convert Spherical coordinates to Cartesian coordinates
 x = math.sin(theta/180*np.pi)*math.cos(phi/180*np.pi)
@@ -211,11 +201,17 @@ Rotation = np.eye(4)
 Rotation[:3, :3] = R
 
 # Rotate the lens
-lens_mesh.apply_transform(Rotation)
+cone_lens.apply_transform(Rotation)
+scene.add_geometry(cone_lens)
+
+voxelized_cone_lens = cone_lens.voxelized(PITCH).fill()
+lens_voxelization = np.around(np.array(voxelized_cone_lens.points),4)
+lens_pcl = trimesh.PointCloud(vertices=np.array(lens_voxelization), colors=[0, 0, 255, 100])
+
+# scene.add_geometry(lens_pcl)
 
 # Create 3d sphere, which is the region where centroid of the lens could be located
-sphere_radius = lens_init_centroid_z/1000-eye_ball_shift[2]
-print(sphere_radius)
+sphere_radius = working_distance/1000-eye_ball_shift[2]
 
 # Generate sphere points
 x, y, z = ellipsoid(sphere_radius, sphere_radius, sphere_radius)
@@ -227,24 +223,12 @@ cloud = trimesh.PointCloud(vertices)
 sphere_mesh = cloud.convex_hull
 sphere_mesh.visual.face_colors = [255, 255, 0, 100]
 
-# # # Translate the coordinates back so that the LeftEyeFront point becomes the origin
-# sphere_mesh.apply_translation([eye_ball_shift[0], eye_ball_shift[1], eye_ball_shift[2]])
-scene.add_geometry(sphere_mesh)
-# lens_mesh.apply_translation([eye_ball_centroid[0], eye_ball_centroid[1], eye_ball_centroid[2]])
+# scene.add_geometry(sphere_mesh)
 
-voxelized_lens = lens_mesh.voxelized(PITCH)
-
-voxelized_lens.fill()
-
-lens_voxelization = np.around(np.array(voxelized_lens.points),4)
-lens_pcl = trimesh.PointCloud(vertices=np.array(lens_voxelization), colors=[0, 0, 255, 100])
-
-scene.add_geometry(lens_mesh_original)
-#
-# for mesh_nr in range(0, len(obj_list)):
-#     mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-#     mesh_original.visual.face_colors = [64, 64, 64, 50]
-#     scene.add_geometry(mesh_original)
+for mesh_nr in range(0, len(obj_list)):
+    mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
+    mesh_original.visual.face_colors = [64, 64, 64, 50]
+    scene.add_geometry(mesh_original)
 
 # Visualize the trimesh
 scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
