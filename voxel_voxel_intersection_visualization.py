@@ -27,11 +27,11 @@ INTERACTIVE_INPUT = False
 eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 
-PITCH = float(input('Size of voxel, e.g. 0.001 means 1mm. Currently, only 0.0005, 0.001, 0.0025, 0.005 allowed:')) if INTERACTIVE_INPUT else 0.001
+PITCH = float(input('Size of voxel, e.g. 0.001 means 1mm. Currently, only 0.0005, 0.001, 0.0025, 0.005 allowed:')) if INTERACTIVE_INPUT else 0.0005
 working_distance = float(input('Default working distance of lens, e.g. 12 means 12mm. Range [0,50] mm:'))  if INTERACTIVE_INPUT else 12
 
 # When scale is 1, the diameter of the lens is around 54.8 mm
-lens_diameter = float(input('Lens diameter, e.g. 50 means 50mm. Range [20, 80] mm:')) if INTERACTIVE_INPUT else 50
+lens_diameter = float(input('Lens diameter, e.g. 50 means 50mm. Range [20, 80] mm:')) if INTERACTIVE_INPUT else 30
 
 # Define the lens rotation by Spherical coordinate system: https://en.wikipedia.org/wiki/Spherical_coordinate_system
 theta = float(input('Rotation angle, theta. Range[0,15] degrees:'))  if INTERACTIVE_INPUT else 0
@@ -138,7 +138,7 @@ scene = trimesh.Scene()
 
 # plot the LeftEyeFront/LeftEyeRear/centroid point
 eye_ball_key_points = trimesh.points.PointCloud(vertices=[mesh_original.vertices[LeftEyeFront], mesh_original.vertices[LeftEyeRear],
-                                                [0,0,0]], colors=(255, 0, 0))
+                                                [0,0,0]], colors=(0, 255, 0))
 
 scene.add_geometry(eye_ball_key_points)
 
@@ -233,63 +233,63 @@ for mesh_nr in range(0, len(obj_list)):
 # Visualize the trimesh
 scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
-# scene_voxel = trimesh.Scene()
-#
-# # load prepared voxel
-# num_of_heads = np.load(f"voxel_results/num_of_heads_{PITCH}.npy")
-# voxel_list_remove_zero = np.load(f"voxel_results/voxel_list_remove_zero_{PITCH}.npy")
-# colors_list = np.load(f"voxel_results/colors_list_{PITCH}.npy")
-# accumulation_remove_zero = np.load(f"voxel_results/accumulation_remove_zero_{PITCH}.npy")
-# voxel_center_min = np.load(f"voxel_results/voxel_center_min_{PITCH}.npy")
-# voxel_center_max = np.load(f"voxel_results/voxel_center_max_{PITCH}.npy")
-#
-# multi_heads = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=colors_list)
-#
-# scene_voxel.add_geometry(eye_ball_key_points)
-# scene_voxel.add_geometry(lens_pcl)
-# scene_voxel.add_geometry(multi_heads)
-#
-# scene_voxel.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
-#
-# z_step = round((voxel_center_max[2]-voxel_center_min[2])/PITCH+1)
-# y_step = round((voxel_center_max[1]-voxel_center_min[1])/PITCH+1)
-#
-# def voxel2index(v):
-#     return round((y_step*z_step*(v[0]-voxel_center_min[0])+z_step*(v[1]-voxel_center_min[1])+(v[2]-voxel_center_min[2]))/PITCH)
-#
-# lens_list = lens_voxelization.tolist()
-# lens_indices = list(map(voxel2index, lens_list))
-#
-# voxel_list = voxel_list_remove_zero.tolist()
-# head_voxel_indices = list(map(voxel2index, voxel_list))
-#
-# _, intersection_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(lens_indices), return_indices=True)
-#
-# intersection_voxels = voxel_list_remove_zero[intersection_indices]
-# intersection_colors_list = colors_list[intersection_indices]
-# head_hits = accumulation_remove_zero[intersection_indices]
-#
-# print(f'Size of voxel:{PITCH} mm')
-# print(f'Lens working distance:{lens_init_centroid_z} mm')
-# print(f'Lens diameter:{lens_diameter} mm')
-# print(f'Rotation angle, theta:{theta} degrees')
-# print(f'Rotation direction, phi (left-down):{phi} degrees')
-#
-# if len(head_hits) > 0:
-#     print(f'max head_hits:{max(head_hits)}')
-#     intersection_multi_heads = trimesh.PointCloud(vertices=intersection_voxels, colors=intersection_colors_list)
-#
-#     scene_voxel_intersection = trimesh.Scene()
-#     scene_voxel_intersection.add_geometry(intersection_multi_heads)
-#     scene_voxel_intersection.add_geometry(eye_ball_key_points)
-#
-#     path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
-#     obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
-#
-#     for mesh_nr in range(0, len(obj_list)):
-#         mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-#         mesh_original.visual.face_colors = [64, 64, 64, 50]
-#         scene_voxel_intersection.add_geometry(mesh_original)
-#     scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
-# else:
-#     print('NO intersection')
+scene_voxel = trimesh.Scene()
+
+# load prepared voxel
+num_of_heads = np.load(f"voxel_results/num_of_heads_{PITCH}.npy")
+voxel_list_remove_zero = np.load(f"voxel_results/voxel_list_remove_zero_{PITCH}.npy")
+colors_list = np.load(f"voxel_results/colors_list_{PITCH}.npy")
+accumulation_remove_zero = np.load(f"voxel_results/accumulation_remove_zero_{PITCH}.npy")
+voxel_center_min = np.load(f"voxel_results/voxel_center_min_{PITCH}.npy")
+voxel_center_max = np.load(f"voxel_results/voxel_center_max_{PITCH}.npy")
+
+multi_heads = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=colors_list)
+
+scene_voxel.add_geometry(eye_ball_key_points)
+scene_voxel.add_geometry(lens_pcl)
+scene_voxel.add_geometry(multi_heads)
+
+scene_voxel.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
+
+z_step = round((voxel_center_max[2]-voxel_center_min[2])/PITCH+1)
+y_step = round((voxel_center_max[1]-voxel_center_min[1])/PITCH+1)
+
+def voxel2index(v):
+    return round((y_step*z_step*(v[0]-voxel_center_min[0])+z_step*(v[1]-voxel_center_min[1])+(v[2]-voxel_center_min[2]))/PITCH)
+
+lens_list = lens_voxelization.tolist()
+lens_indices = list(map(voxel2index, lens_list))
+
+voxel_list = voxel_list_remove_zero.tolist()
+head_voxel_indices = list(map(voxel2index, voxel_list))
+
+_, intersection_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(lens_indices), return_indices=True)
+
+intersection_voxels = voxel_list_remove_zero[intersection_indices]
+intersection_colors_list = colors_list[intersection_indices]
+head_hits = accumulation_remove_zero[intersection_indices]
+
+print(f'Size of voxel:{PITCH} mm')
+print(f'Lens working distance:{working_distance} mm')
+print(f'Lens diameter:{lens_diameter} mm')
+print(f'Rotation angle, theta:{theta} degrees')
+print(f'Rotation direction, phi (left-down):{phi} degrees')
+
+if len(head_hits) > 0:
+    print(f'max head_hits:{max(head_hits)}')
+    intersection_multi_heads = trimesh.PointCloud(vertices=intersection_voxels, colors=intersection_colors_list)
+
+    scene_voxel_intersection = trimesh.Scene()
+    scene_voxel_intersection.add_geometry(intersection_multi_heads)
+    scene_voxel_intersection.add_geometry(eye_ball_key_points)
+
+    path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
+    obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
+
+    for mesh_nr in range(0, len(obj_list)):
+        mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
+        mesh_original.visual.face_colors = [64, 64, 64, 50]
+        scene_voxel_intersection.add_geometry(mesh_original)
+    scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
+else:
+    print('NO intersection')
