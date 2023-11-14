@@ -22,21 +22,21 @@ Head3 = 1203
 MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 CUT_LENS = False
-INTERACTIVE_INPUT = False
+INTERACTIVE_INPUT = True
 CORNEA_IGNORE = 6 # size of cornea region to be ignored. size = CORNEA*PITH
 
 eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 
-PITCH = float(input('Size of voxel, e.g. 0.001 means 1mm. Currently, only 0.0005, 0.001, 0.0025, 0.005 allowed:')) if INTERACTIVE_INPUT else 0.0005
-working_distance = float(input('Default working distance of lens, e.g. 12 means 12mm. Range [0,50] mm:')) if INTERACTIVE_INPUT else 12
+PITCH = float(input('Size of voxel, e.g. 0.001 means 1mm. Only 0.0005, 0.001, 0.005 allowed:')) if INTERACTIVE_INPUT else 0.0005
+working_distance = float(input('Working distance of lens, e.g. 12 means 12mm. Range [0,50] mm:')) if INTERACTIVE_INPUT else 12
 
 # When scale is 1, the diameter of the lens is around 54.8 mm
 lens_diameter = float(input('Lens diameter, e.g. 50 means 50mm. Range [20, 80] mm:')) if INTERACTIVE_INPUT else 50
 
 # Define the lens rotation by Spherical coordinate system: https://en.wikipedia.org/wiki/Spherical_coordinate_system
-theta = float(input('Rotation angle, theta. Range[0,15] degrees:'))  if INTERACTIVE_INPUT else 0
-phi = float(input('Rotation direction, phi. Range[0,90] degrees, 0 means pure left, 90 means pure down:')) if INTERACTIVE_INPUT else 0
+theta = float(input('Rotation angle, theta. Range[0,15] degrees:')) if INTERACTIVE_INPUT else 0
+phi = float(input('Rotation direction, phi. Range[0,90] degrees, 0 means exact left, 90 means exact down:')) if INTERACTIVE_INPUT else 0
 print('\n')
 
 def intersection_elements(a, b):
