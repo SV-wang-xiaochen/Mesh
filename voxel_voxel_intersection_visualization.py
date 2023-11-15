@@ -22,19 +22,19 @@ Head3 = 1203
 MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 CUT_LENS = False
-INTERACTIVE_INPUT = True
-CORNEA_IGNORE = 6 # size of cornea region to be ignored. size = CORNEA*PITH
+INTERACTIVE_INPUT = False
+CORNEA_IGNORE = 0.003 # size of cornea region to be ignored. size = CORNEA*PITH
 
 eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 
-PITCH = float(input('Size of voxel, e.g. 0.001 means 1mm. Only 0.0005, 0.001, 0.005 allowed:')) if INTERACTIVE_INPUT else 0.0005
+PITCH = float(input('Size of voxel, e.g. 0.001 means 1mm. Only 0.0005, 0.001, 0.005 allowed:')) if INTERACTIVE_INPUT else 0.001
 working_distance = float(input('Working distance of lens, e.g. 12 means 12mm. Range [0,50] mm:')) if INTERACTIVE_INPUT else 12
 lens_diameter = float(input('Lens diameter, e.g. 50 means 50mm. Range [20, 80] mm:')) if INTERACTIVE_INPUT else 50
 
-# Define the lens rotation by Spherical coordinate system: https://en.wikipedia.org/wiki/Spherical_coordinate_system
-theta = float(input('Rotation angle, theta. Range[0,15] degrees:')) if INTERACTIVE_INPUT else 0
-phi = float(input('Rotation direction, phi. Range[0,90] degrees, 0 means exact left, 90 means exact down:')) if INTERACTIVE_INPUT else 0
+# Define the lens rotation
+alpha = float(input('Rotation angle, down-up direction. Range[0,90] degrees, 90 means exact down:')) if INTERACTIVE_INPUT else 0
+beta = float(input('Rotation angle, left-right direction. Range[0,90] degrees, 90 means exact left:')) if INTERACTIVE_INPUT else 0
 print('\n')
 
 def intersection_elements(a, b):
@@ -182,20 +182,24 @@ cone_lens.apply_translation([0, 0, working_distance/1000-eye_ball_shift[2]])
 
 cone_lens_center = trimesh.points.PointCloud(vertices=[[0, 0, working_distance/1000-eye_ball_shift[2]]], colors=(0, 255, 0))
 
-x_angle = 8 / 180 * np.pi
-x_Rotation = np.eye(4)
-x_R = np.array([[1, 0, 0],
-                [0, np.cos(x_angle), -np.sin(x_angle)],
-                [0, np.sin(x_angle), np.cos(x_angle)]])
-x_Rotation[:3, :3] = x_R
+# get destination coordinate of lens (x,y,z) after rotation
+A = math.pow(math.tan(alpha/180*np.pi)*math.tan(beta/180*np.pi),2)
+B = math.pow(math.tan(alpha/180*np.pi), 2)
 
-cone_lens.apply_transform(x_Rotation)
-cone_lens_center.apply_transform(x_Rotation)
-
-# Convert Spherical coordinates to Cartesian coordinates
-x = math.sin(theta/180*np.pi)*math.cos(phi/180*np.pi)
-y = -math.sin(theta/180*np.pi)*math.sin(phi/180*np.pi)
-z = math.cos(theta/180*np.pi)
+if alpha == 90 and beta == 90:
+    raise Exception("Sorry, the pair of rotation angles are invalid")
+elif alpha == 90:
+    x = 0
+    y = -1
+    z = 0
+elif beta == 90:
+    x = 1
+    y = 0
+    z = 0
+else:
+    x = math.sqrt(A/(A+B+1))
+    y = -math.sqrt(B/(A+B+1))
+    z = math.sqrt(1/(A+B+1))
 
 # Calculate the rotation matrix between initial direction vector [0,0,1) and (x,y,z)
 R = rotation_matrix_from_vectors((0,0,1), (x,y,z))
@@ -235,9 +239,8 @@ for mesh_nr in range(0, len(obj_list)):
     scene.add_geometry(mesh_original)
 
 # #######################  create a cuboid around cornea center where the head hits should be ignored  #######################
-cuboid = trimesh.creation.box(extents=[CORNEA_IGNORE*PITCH,CORNEA_IGNORE*PITCH,CORNEA_IGNORE*PITCH])
+cuboid = trimesh.creation.box(extents=[CORNEA_IGNORE,CORNEA_IGNORE,CORNEA_IGNORE])
 cuboid.apply_translation([0, 0, -eye_ball_shift[2]])
-cuboid.apply_transform(x_Rotation)
 cuboid.apply_transform(Rotation)
 # scene.add_geometry(cuboid)
 
@@ -292,8 +295,8 @@ head_hits = accumulation_remove_zero[intersection_indices]
 print(f'Size of voxel:{PITCH} mm')
 print(f'Lens working distance:{working_distance} mm')
 print(f'Lens diameter:{lens_diameter} mm')
-print(f'Rotation angle, theta:{theta} degrees')
-print(f'Rotation direction, phi (left-down):{phi} degrees')
+print(f'Rotation angle, down-up direction:{alpha} degrees')
+print(f'Rotation angle, left-right direction:{beta} degrees')
 
 if len(head_hits) > 0:
     print(f'max head_hits:{max(head_hits)}')
