@@ -183,8 +183,8 @@ cone_lens.apply_translation([0, 0, working_distance/1000-eye_ball_shift[2]])
 cone_lens_center = trimesh.points.PointCloud(vertices=[[0, 0, working_distance/1000-eye_ball_shift[2]]], colors=(0, 255, 0))
 
 # get destination coordinate of lens (x,y,z) after rotation
-A = math.pow(math.tan(alpha/180*np.pi)*math.tan(beta/180*np.pi),2)
-B = math.pow(math.tan(alpha/180*np.pi), 2)
+A = math.pow(math.tan(alpha/180*np.pi), 2)
+B = math.pow(math.tan(beta/180*np.pi), 2)
 
 if alpha == 90 and beta == 90:
     raise Exception("Sorry, the pair of rotation angles are invalid")
@@ -197,8 +197,8 @@ elif beta == 90:
     y = 0
     z = 0
 else:
-    x = math.sqrt(A/(A+B+1))
-    y = -math.sqrt(B/(A+B+1))
+    x = math.sqrt(B/(A+B+1))
+    y = -math.sqrt(A/(A+B+1))
     z = math.sqrt(1/(A+B+1))
 
 # Calculate the rotation matrix between initial direction vector [0,0,1) and (x,y,z)
