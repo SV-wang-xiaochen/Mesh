@@ -37,6 +37,36 @@ alpha = float(input('Rotation angle, down-up direction. Range[0,90] degrees, 90 
 beta = float(input('Rotation angle, left-right direction. Range[0,90] degrees, 90 means exact left:')) if INTERACTIVE_INPUT else 0
 print('\n')
 
+# Define the side eye angle
+side_eye_angle = float(input('Side eye angle, left-right direction. Range[0,25] degrees:')) if INTERACTIVE_INPUT else 25
+print('\n')
+
+
+def xyz_from_alpha_beta(alpha, beta):
+    """ Find the destination coordinate of lens (x,y,z) after rotation defined by alpha and beta
+    :param alpha: Rotation angle, down-up direction.
+    :param beta: Rotation angle, left-right direction.
+    :return (x,y,z): destination coordinate of lens (x,y,z)
+    """
+    A = math.pow(math.tan(alpha / 180 * np.pi), 2)
+    B = math.pow(math.tan(beta / 180 * np.pi), 2)
+
+    if alpha == 90 and beta == 90:
+        raise Exception("Sorry, the pair of rotation angles are invalid")
+    elif alpha == 90:
+        x = 0
+        y = -1
+        z = 0
+    elif beta == 90:
+        x = 1
+        y = 0
+        z = 0
+    else:
+        x = math.sqrt(B / (A + B + 1))
+        y = -math.sqrt(A / (A + B + 1))
+        z = math.sqrt(1 / (A + B + 1))
+    return x,y,z
+
 def intersection_elements(a, b):
     mask = np.isin(b, a).all(axis=1)
     c = b[mask]
@@ -135,9 +165,8 @@ mesh_original.visual.face_colors = [64, 64, 64, 100]
 
 scene = trimesh.Scene()
 
-# plot the LeftEyeFront/LeftEyeRear/centroid point
-eye_ball_key_points = trimesh.points.PointCloud(vertices=[mesh_original.vertices[LeftEyeFront], mesh_original.vertices[LeftEyeRear],
-                                                [0,0,0]], colors=(0, 255, 0))
+# plot the LeftEyeFront/centroid point
+eye_ball_key_points = trimesh.points.PointCloud(vertices=[[0, 0, -eye_ball_shift[2]],[0,0,0]], colors=(0, 255, 0))
 
 scene.add_geometry(eye_ball_key_points)
 
@@ -180,37 +209,38 @@ if not NOT_SHOW_MESH:
 cone_lens = trimesh.creation.cone(lens_diameter/2000, -working_distance/1000)
 cone_lens.apply_translation([0, 0, working_distance/1000-eye_ball_shift[2]])
 
-cone_lens_center = trimesh.points.PointCloud(vertices=[[0, 0, working_distance/1000-eye_ball_shift[2]]], colors=(0, 255, 0))
+cone_lens_center = [0, 0, working_distance/1000-eye_ball_shift[2]]
+cone_top = [0, 0, -eye_ball_shift[2]]
+cone_lens_key_points = trimesh.points.PointCloud(vertices=[cone_top, cone_lens_center], colors=(0, 255, 0))
+cone_lens_top_point = trimesh.points.PointCloud(vertices=[cone_top], colors=(255, 255, 0))
 
-# get destination coordinate of lens (x,y,z) after rotation
-A = math.pow(math.tan(alpha/180*np.pi), 2)
-B = math.pow(math.tan(beta/180*np.pi), 2)
-
-if alpha == 90 and beta == 90:
-    raise Exception("Sorry, the pair of rotation angles are invalid")
-elif alpha == 90:
-    x = 0
-    y = -1
-    z = 0
-elif beta == 90:
-    x = 1
-    y = 0
-    z = 0
-else:
-    x = math.sqrt(B/(A+B+1))
-    y = -math.sqrt(A/(A+B+1))
-    z = math.sqrt(1/(A+B+1))
+x_side,y_side,z_side = xyz_from_alpha_beta(alpha, beta+side_eye_angle)
 
 # Calculate the rotation matrix between initial direction vector [0,0,1) and (x,y,z)
-R = rotation_matrix_from_vectors((0,0,1), (x,y,z))
+R = rotation_matrix_from_vectors((0,0,1), (x_side,y_side,z_side))
 Rotation = np.eye(4)
 Rotation[:3, :3] = R
 
 # Rotate the lens
 cone_lens.apply_transform(Rotation)
-cone_lens_center.apply_transform(Rotation)
+cone_lens_key_points.apply_transform(Rotation)
+
+# Translate the lens to side position
+x,y,z = xyz_from_alpha_beta(alpha, beta)
+
+R = rotation_matrix_from_vectors((0,0,1), (x,y,z))
+Rotation = np.eye(4)
+Rotation[:3, :3] = R
+
+cone_lens_top_point.apply_transform(Rotation)
+
+# side_position_point = cone_lens_key_points.vertices[0]
+
+cone_lens.apply_translation(cone_lens_top_point.vertices[0]-cone_lens_key_points.vertices[0])
+
 scene.add_geometry(cone_lens)
-scene.add_geometry(cone_lens_center)
+# scene.add_geometry(cone_lens_key_points_side)
+scene.add_geometry(cone_lens_top_point)
 
 voxelized_cone_lens = cone_lens.voxelized(PITCH).fill()
 lens_voxelization = np.around(np.array(voxelized_cone_lens.points),4)
