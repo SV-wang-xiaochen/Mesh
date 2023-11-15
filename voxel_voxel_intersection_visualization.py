@@ -23,22 +23,21 @@ MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 CUT_LENS = False
 INTERACTIVE_INPUT = False
-CORNEA_IGNORE = 0.003 # size of cornea region to be ignored. size = CORNEA*PITH
+CORNEA_IGNORE = 0.005 # size of cornea region to be ignored. size = CORNEA*PITH
 
 eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 
-PITCH = float(input('Size of voxel, e.g. 0.001 means 1mm. Only 0.0005, 0.001, 0.005 allowed:')) if INTERACTIVE_INPUT else 0.001
+PITCH = float(input('Size of voxel, e.g. 0.001 means 1mm. Only 0.0005, 0.001, 0.005 allowed. The smaller, the more accurate:')) if INTERACTIVE_INPUT else 0.0005
 working_distance = float(input('Working distance of lens, e.g. 12 means 12mm. Range [0,50] mm:')) if INTERACTIVE_INPUT else 12
-lens_diameter = float(input('Lens diameter, e.g. 50 means 50mm. Range [20, 80] mm:')) if INTERACTIVE_INPUT else 50
+lens_diameter = float(input('Lens diameter, e.g. 50 means 50mm. Range [20, 80] mm:')) if INTERACTIVE_INPUT else 58
 
 # Define the lens rotation
 alpha = float(input('Rotation angle, down-up direction. Range[0,90] degrees, 90 means exact down:')) if INTERACTIVE_INPUT else 0
 beta = float(input('Rotation angle, left-right direction. Range[0,90] degrees, 90 means exact left:')) if INTERACTIVE_INPUT else 0
-print('\n')
 
 # Define the side eye angle
-side_eye_angle = float(input('Side eye angle, left-right direction. Range[0,25] degrees:')) if INTERACTIVE_INPUT else 25
+side_eye_angle = float(input('Side eye angle. Range[0,25] degrees:')) if INTERACTIVE_INPUT else 0
 print('\n')
 
 
@@ -211,36 +210,34 @@ cone_lens.apply_translation([0, 0, working_distance/1000-eye_ball_shift[2]])
 
 cone_lens_center = [0, 0, working_distance/1000-eye_ball_shift[2]]
 cone_top = [0, 0, -eye_ball_shift[2]]
-cone_lens_key_points = trimesh.points.PointCloud(vertices=[cone_top, cone_lens_center], colors=(0, 255, 0))
+cone_lens_key_points = trimesh.points.PointCloud(vertices=[cone_top, cone_lens_center], colors=(255, 255, 0))
 cone_lens_top_point = trimesh.points.PointCloud(vertices=[cone_top], colors=(255, 255, 0))
 
-x_side,y_side,z_side = xyz_from_alpha_beta(alpha, beta+side_eye_angle)
+x,y,z = xyz_from_alpha_beta(alpha, beta+side_eye_angle)
 
 # Calculate the rotation matrix between initial direction vector [0,0,1) and (x,y,z)
-R = rotation_matrix_from_vectors((0,0,1), (x_side,y_side,z_side))
-Rotation = np.eye(4)
-Rotation[:3, :3] = R
+R = rotation_matrix_from_vectors((0,0,1), (x,y,z))
+Rotation_front = np.eye(4)
+Rotation_front[:3, :3] = R
 
 # Rotate the lens
-cone_lens.apply_transform(Rotation)
-cone_lens_key_points.apply_transform(Rotation)
+cone_lens.apply_transform(Rotation_front)
+cone_lens_key_points.apply_transform(Rotation_front)
 
-# Translate the lens to side position
-x,y,z = xyz_from_alpha_beta(alpha, beta)
+# Translate the lens to final position
+x_side,y_side,z_side = xyz_from_alpha_beta(alpha, beta)
 
-R = rotation_matrix_from_vectors((0,0,1), (x,y,z))
-Rotation = np.eye(4)
-Rotation[:3, :3] = R
+R = rotation_matrix_from_vectors((0,0,1), (x_side,y_side,z_side))
+Rotation_side = np.eye(4)
+Rotation_side[:3, :3] = R
 
-cone_lens_top_point.apply_transform(Rotation)
-
-# side_position_point = cone_lens_key_points.vertices[0]
+cone_lens_top_point.apply_transform(Rotation_side)
 
 cone_lens.apply_translation(cone_lens_top_point.vertices[0]-cone_lens_key_points.vertices[0])
+cone_lens_key_points.apply_translation(cone_lens_top_point.vertices[0]-cone_lens_key_points.vertices[0])
 
 scene.add_geometry(cone_lens)
-# scene.add_geometry(cone_lens_key_points_side)
-scene.add_geometry(cone_lens_top_point)
+scene.add_geometry(cone_lens_key_points)
 
 voxelized_cone_lens = cone_lens.voxelized(PITCH).fill()
 lens_voxelization = np.around(np.array(voxelized_cone_lens.points),4)
@@ -271,7 +268,7 @@ for mesh_nr in range(0, len(obj_list)):
 # #######################  create a cuboid around cornea center where the head hits should be ignored  #######################
 cuboid = trimesh.creation.box(extents=[CORNEA_IGNORE,CORNEA_IGNORE,CORNEA_IGNORE])
 cuboid.apply_translation([0, 0, -eye_ball_shift[2]])
-cuboid.apply_transform(Rotation)
+cuboid.apply_transform(Rotation_side)
 # scene.add_geometry(cuboid)
 
 voxelized_cuboid = cuboid.voxelized(PITCH).fill()
@@ -327,6 +324,7 @@ print(f'Lens working distance:{working_distance} mm')
 print(f'Lens diameter:{lens_diameter} mm')
 print(f'Rotation angle, down-up direction:{alpha} degrees')
 print(f'Rotation angle, left-right direction:{beta} degrees')
+print(f'Side eye angle:{side_eye_angle} degrees')
 
 if len(head_hits) > 0:
     print(f'max head_hits:{max(head_hits)}')
