@@ -23,7 +23,7 @@ MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 CUT_LENS = False
 INTERACTIVE_INPUT = False
-CORNEA_IGNORE = 0.005 # size of cornea region to be ignored. size = CORNEA*PITH
+CORNEA_IGNORE = 0.005 # size of cornea region to be ignored
 
 eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
