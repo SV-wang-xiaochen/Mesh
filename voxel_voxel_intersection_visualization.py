@@ -23,21 +23,31 @@ MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 CUT_LENS = False
 INTERACTIVE_INPUT = False
-CORNEA_IGNORE = 0.005 # size of cornea region to be ignored
+
+# Define a cylinder volumn where the hits should be ignored
+BOX1_HEIGHT_UPPER = 0.007
+BOX1_HEIGHT_LOWER = 0.015
+BOX1_WIDTH = 0.014
+
+BOX2_HEIGHT_UPPER = 0.006
+BOX2_HEIGHT_LOWER = 0.014
+BOX2_WIDTH = 0.025
+
+DEPTH_IGNORE = 0.03
 
 eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 
 PITCH = float(input('Size of voxel, e.g. 0.001 means 1mm. Only 0.0005, 0.001, 0.005 allowed. The smaller, the more accurate:')) if INTERACTIVE_INPUT else 0.0005
-working_distance = float(input('Working distance of lens, e.g. 12 means 12mm. Range [0,50] mm:')) if INTERACTIVE_INPUT else 12
+working_distance = float(input('Working distance of lens, e.g. 12 means 12mm. Range [0,50] mm:')) if INTERACTIVE_INPUT else 10
 lens_diameter = float(input('Lens diameter, e.g. 50 means 50mm. Range [20, 80] mm:')) if INTERACTIVE_INPUT else 58
 
 # Define the lens rotation
-alpha = float(input('Rotation angle, down-up direction. Range[0,90] degrees, 90 means exact down:')) if INTERACTIVE_INPUT else 0
-beta = float(input('Rotation angle, left-right direction. Range[0,90] degrees, 90 means exact left:')) if INTERACTIVE_INPUT else 0
+alpha = float(input('Rotation angle, down-up direction. Range[0,90] degrees, 90 means exact down:')) if INTERACTIVE_INPUT else 12
+beta = float(input('Rotation angle, left-right direction. Range[0,90] degrees, 90 means exact left:')) if INTERACTIVE_INPUT else 10
 
 # Define the side eye angle
-side_eye_angle = float(input('Side eye angle. Range[0,25] degrees:')) if INTERACTIVE_INPUT else 0
+side_eye_angle = float(input('Side eye angle. Range[0,25] degrees:')) if INTERACTIVE_INPUT else 25
 print('\n')
 
 
@@ -236,6 +246,7 @@ cone_lens_top_point.apply_transform(Rotation_side)
 cone_lens.apply_translation(cone_lens_top_point.vertices[0]-cone_lens_key_points.vertices[0])
 cone_lens_key_points.apply_translation(cone_lens_top_point.vertices[0]-cone_lens_key_points.vertices[0])
 
+cone_lens.visual.face_colors = [0, 64, 64, 100]
 scene.add_geometry(cone_lens)
 scene.add_geometry(cone_lens_key_points)
 
@@ -265,16 +276,24 @@ for mesh_nr in range(0, len(obj_list)):
     mesh_original.visual.face_colors = [64, 64, 64, 50]
     scene.add_geometry(mesh_original)
 
-# #######################  create a cuboid around cornea center where the head hits should be ignored  #######################
-cuboid = trimesh.creation.box(extents=[CORNEA_IGNORE,CORNEA_IGNORE,CORNEA_IGNORE])
-cuboid.apply_translation([0, 0, -eye_ball_shift[2]])
-cuboid.apply_transform(Rotation_side)
-# scene.add_geometry(cuboid)
+# #######################  create a volumn around cornea center where the head hits should be ignored  #######################
+volumn1_ignore = trimesh.creation.box([BOX1_WIDTH, BOX1_HEIGHT_UPPER+BOX1_HEIGHT_LOWER, DEPTH_IGNORE])
+volumn1_ignore.apply_translation([0, (BOX1_HEIGHT_UPPER+BOX1_HEIGHT_LOWER)/2-BOX1_HEIGHT_LOWER, DEPTH_IGNORE/2])
+# scene.add_geometry(volumn1_ignore)
 
-voxelized_cuboid = cuboid.voxelized(PITCH).fill()
-cuboid_voxelization = np.around(np.array(voxelized_cuboid.points),4)
-cuboid_pcl = trimesh.PointCloud(vertices=np.array(cuboid_voxelization), colors=[255, 0, 255, 100])
-# scene.add_geometry(cuboid_pcl)
+voxelized_volumn1 = volumn1_ignore.voxelized(PITCH).fill()
+volumn1_voxelization = np.around(np.array(voxelized_volumn1.points),4)
+volumn1_pcl = trimesh.PointCloud(vertices=np.array(volumn1_voxelization), colors=[255, 0, 255, 100])
+# scene.add_geometry(cylinder_pcl)
+
+volumn2_ignore = trimesh.creation.box([BOX2_WIDTH, BOX2_HEIGHT_UPPER+BOX2_HEIGHT_LOWER, DEPTH_IGNORE])
+volumn2_ignore.apply_translation([0, (BOX2_HEIGHT_UPPER+BOX2_HEIGHT_LOWER)/2-BOX2_HEIGHT_LOWER, DEPTH_IGNORE/2])
+# scene.add_geometry(volumn2_ignore)
+
+voxelized_volumn2= volumn2_ignore.voxelized(PITCH).fill()
+volumn2_voxelization = np.around(np.array(voxelized_volumn2.points),4)
+volumn2_pcl = trimesh.PointCloud(vertices=np.array(volumn2_voxelization), colors=[255, 0, 255, 100])
+# scene.add_geometry(cylinder_pcl)
 
 # Visualize the trimesh
 scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
@@ -306,13 +325,17 @@ def voxel2index(v):
 lens_list = lens_voxelization.tolist()
 lens_indices = list(map(voxel2index, lens_list))
 
-cuboid_list = cuboid_voxelization.tolist()
-cuboid_voxel_indices = list(map(voxel2index, cuboid_list))
+volumn1_list = volumn1_voxelization.tolist()
+volumn1_voxel_indices = list(map(voxel2index, volumn1_list))
+
+volumn2_list = volumn2_voxelization.tolist()
+volumn2_voxel_indices = list(map(voxel2index, volumn2_list))
 
 voxel_list = voxel_list_remove_zero.tolist()
 head_voxel_indices = list(map(voxel2index, voxel_list))
 
-valid_lens_indices = list(np.setdiff1d(np.array(lens_indices), np.array(cuboid_voxel_indices), True))
+valid_lens_indices_temp = list(np.setdiff1d(np.array(lens_indices), np.array(volumn1_voxel_indices), True))
+valid_lens_indices = list(np.setdiff1d(np.array(valid_lens_indices_temp), np.array(volumn2_voxel_indices), True))
 _, intersection_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(valid_lens_indices), return_indices=True)
 
 intersection_voxels = voxel_list_remove_zero[intersection_indices]
