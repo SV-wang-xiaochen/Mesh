@@ -17,8 +17,6 @@ def main():
     Translation[1, 3] = 0
     Translation[2, 3] = -eye_ball_centroid[2]
 
-    mesh_new = mesh.transform(Translation)
-
     x_angle = 8 / 180 * np.pi
     x_Rotation = np.eye(4)
     x_R = np.array([[1, 0, 0],
@@ -29,7 +27,7 @@ def main():
     for mesh_nr in range(0, len(obj_list)):
         mesh = o3d.io.read_triangle_mesh(obj_list[mesh_nr])
         mesh1 = mesh.transform(Translation)
-        mesh2 = mesh.transform(x_Rotation)
+        mesh2 = mesh1.transform(x_Rotation)
 
         o3d.io.write_triangle_mesh(obj_list[mesh_nr], mesh2)
 
