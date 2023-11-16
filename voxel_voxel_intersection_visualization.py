@@ -25,13 +25,16 @@ CUT_LENS = False
 INTERACTIVE_INPUT = False
 
 # Define a cylinder volumn where the hits should be ignored
-BOX1_HEIGHT_UPPER = 0.007
-BOX1_HEIGHT_LOWER = 0.015
-BOX1_WIDTH = 0.014
+# BOX1_HEIGHT_UPPER = 0.007
+# BOX1_HEIGHT_LOWER = 0.015
+# BOX1_WIDTH = 0.014
+#
+# BOX2_HEIGHT_UPPER = 0.006
+# BOX2_HEIGHT_LOWER = 0.014
+# BOX2_WIDTH = 0.025
 
-BOX2_HEIGHT_UPPER = 0.006
-BOX2_HEIGHT_LOWER = 0.014
-BOX2_WIDTH = 0.025
+CYLINDER_RADIUS = 0.012
+CYLINDER_Y_SHIFT = -0.003
 
 DEPTH_IGNORE = 0.03
 
@@ -44,10 +47,10 @@ lens_diameter = float(input('Lens diameter, e.g. 50 means 50mm. Range [20, 80] m
 
 # Define the lens rotation
 alpha = float(input('Rotation angle, down-up direction. Range[0,90] degrees, 90 means exact down:')) if INTERACTIVE_INPUT else 12
-beta = float(input('Rotation angle, left-right direction. Range[0,90] degrees, 90 means exact left:')) if INTERACTIVE_INPUT else 10
+beta = float(input('Rotation angle, left-right direction. Range[0,90] degrees, 90 means exact left:')) if INTERACTIVE_INPUT else 17
 
 # Define the side eye angle
-side_eye_angle = float(input('Side eye angle. Range[0,25] degrees:')) if INTERACTIVE_INPUT else 25
+side_eye_angle = float(input('Side eye angle. Range[0,25] degrees:')) if INTERACTIVE_INPUT else 0
 print('\n')
 
 
@@ -277,22 +280,31 @@ for mesh_nr in range(0, len(obj_list)):
     scene.add_geometry(mesh_original)
 
 # #######################  create a volumn around cornea center where the head hits should be ignored  #######################
-volumn1_ignore = trimesh.creation.box([BOX1_WIDTH, BOX1_HEIGHT_UPPER+BOX1_HEIGHT_LOWER, DEPTH_IGNORE])
-volumn1_ignore.apply_translation([0, (BOX1_HEIGHT_UPPER+BOX1_HEIGHT_LOWER)/2-BOX1_HEIGHT_LOWER, DEPTH_IGNORE/2])
-# scene.add_geometry(volumn1_ignore)
+# volumn1_ignore = trimesh.creation.box([BOX1_WIDTH, BOX1_HEIGHT_UPPER+BOX1_HEIGHT_LOWER, DEPTH_IGNORE])
+# volumn1_ignore.apply_translation([0, (BOX1_HEIGHT_UPPER+BOX1_HEIGHT_LOWER)/2-BOX1_HEIGHT_LOWER, DEPTH_IGNORE/2])
+# # scene.add_geometry(volumn1_ignore)
+#
+# voxelized_volumn1 = volumn1_ignore.voxelized(PITCH).fill()
+# volumn1_voxelization = np.around(np.array(voxelized_volumn1.points),4)
+# volumn1_pcl = trimesh.PointCloud(vertices=np.array(volumn1_voxelization), colors=[255, 0, 255, 100])
+# # scene.add_geometry(cylinder_pcl)
+#
+# volumn2_ignore = trimesh.creation.box([BOX2_WIDTH, BOX2_HEIGHT_UPPER+BOX2_HEIGHT_LOWER, DEPTH_IGNORE])
+# volumn2_ignore.apply_translation([0, (BOX2_HEIGHT_UPPER+BOX2_HEIGHT_LOWER)/2-BOX2_HEIGHT_LOWER, DEPTH_IGNORE/2])
+# # scene.add_geometry(volumn2_ignore)
+#
+# voxelized_volumn2= volumn2_ignore.voxelized(PITCH).fill()
+# volumn2_voxelization = np.around(np.array(voxelized_volumn2.points),4)
+# volumn2_pcl = trimesh.PointCloud(vertices=np.array(volumn2_voxelization), colors=[255, 0, 255, 100])
+# # scene.add_geometry(cylinder_pcl)
 
-voxelized_volumn1 = volumn1_ignore.voxelized(PITCH).fill()
-volumn1_voxelization = np.around(np.array(voxelized_volumn1.points),4)
-volumn1_pcl = trimesh.PointCloud(vertices=np.array(volumn1_voxelization), colors=[255, 0, 255, 100])
-# scene.add_geometry(cylinder_pcl)
+cylinder_ignore = trimesh.creation.cylinder(radius=CYLINDER_RADIUS,height=DEPTH_IGNORE)
+cylinder_ignore.apply_translation([0, CYLINDER_Y_SHIFT, DEPTH_IGNORE/2])
+# scene.add_geometry(cylinder_ignore)
 
-volumn2_ignore = trimesh.creation.box([BOX2_WIDTH, BOX2_HEIGHT_UPPER+BOX2_HEIGHT_LOWER, DEPTH_IGNORE])
-volumn2_ignore.apply_translation([0, (BOX2_HEIGHT_UPPER+BOX2_HEIGHT_LOWER)/2-BOX2_HEIGHT_LOWER, DEPTH_IGNORE/2])
-# scene.add_geometry(volumn2_ignore)
-
-voxelized_volumn2= volumn2_ignore.voxelized(PITCH).fill()
-volumn2_voxelization = np.around(np.array(voxelized_volumn2.points),4)
-volumn2_pcl = trimesh.PointCloud(vertices=np.array(volumn2_voxelization), colors=[255, 0, 255, 100])
+voxelized_cylinder = cylinder_ignore.voxelized(PITCH).fill()
+cylinder_voxelization = np.around(np.array(voxelized_cylinder.points),4)
+cylinder_pcl = trimesh.PointCloud(vertices=np.array(cylinder_voxelization), colors=[255, 0, 255, 100])
 # scene.add_geometry(cylinder_pcl)
 
 # Visualize the trimesh
@@ -325,17 +337,22 @@ def voxel2index(v):
 lens_list = lens_voxelization.tolist()
 lens_indices = list(map(voxel2index, lens_list))
 
-volumn1_list = volumn1_voxelization.tolist()
-volumn1_voxel_indices = list(map(voxel2index, volumn1_list))
+# volumn1_list = volumn1_voxelization.tolist()
+# volumn1_voxel_indices = list(map(voxel2index, volumn1_list))
+#
+# volumn2_list = volumn2_voxelization.tolist()
+# volumn2_voxel_indices = list(map(voxel2index, volumn2_list))
 
-volumn2_list = volumn2_voxelization.tolist()
-volumn2_voxel_indices = list(map(voxel2index, volumn2_list))
+cylinder_list = cylinder_voxelization.tolist()
+cylinder_voxel_indices = list(map(voxel2index, cylinder_list))
 
 voxel_list = voxel_list_remove_zero.tolist()
 head_voxel_indices = list(map(voxel2index, voxel_list))
 
-valid_lens_indices_temp = list(np.setdiff1d(np.array(lens_indices), np.array(volumn1_voxel_indices), True))
-valid_lens_indices = list(np.setdiff1d(np.array(valid_lens_indices_temp), np.array(volumn2_voxel_indices), True))
+# valid_lens_indices_temp = list(np.setdiff1d(np.array(lens_indices), np.array(volumn1_voxel_indices), True))
+# valid_lens_indices = list(np.setdiff1d(np.array(valid_lens_indices_temp), np.array(volumn2_voxel_indices), True))
+
+valid_lens_indices = list(np.setdiff1d(np.array(lens_indices), np.array(cylinder_voxel_indices), True))
 _, intersection_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(valid_lens_indices), return_indices=True)
 
 intersection_voxels = voxel_list_remove_zero[intersection_indices]
