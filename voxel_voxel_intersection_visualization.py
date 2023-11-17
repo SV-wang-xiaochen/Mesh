@@ -42,7 +42,7 @@ eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBal
 lens_half_height_after_cut = 22
 
 while True:
-    flag = input('Enter y to continue, Enter n to exit:')
+    flag = input('Enter y to continue, Enter n to exit:') if INTERACTIVE_INPUT else 'y'
     if flag == 'y':
         # PITCH_TEMP = float(input('Size of voxel. Only [0.4, 0.5, 1] mm allowed. The smaller, the more accurate:')) if INTERACTIVE_INPUT else 0.4
         PITCH = 0.0004
