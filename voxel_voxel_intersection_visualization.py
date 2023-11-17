@@ -41,16 +41,17 @@ DEPTH_IGNORE = 0.03
 eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 
-PITCH = float(input('Size of voxel, e.g. 0.001 means 1mm. Only 0.0005, 0.001, 0.005 allowed. The smaller, the more accurate:')) if INTERACTIVE_INPUT else 0.0005
-working_distance = float(input('Working distance of lens, e.g. 12 means 12mm. Range [0,50] mm:')) if INTERACTIVE_INPUT else 10
-lens_diameter = float(input('Lens diameter, e.g. 50 means 50mm. Range [20, 80] mm:')) if INTERACTIVE_INPUT else 58
+PITCH_TEMP = float(input('Size of voxel. Only [0.5, 1, 5] mm allowed. The smaller, the more accurate:')) if INTERACTIVE_INPUT else 0.5
+PITCH = PITCH_TEMP/1000
+working_distance = float(input('Working distance of lens. Range [0,50] mm:')) if INTERACTIVE_INPUT else 10
+lens_diameter = float(input('Lens diameter. Range [20, 80] mm:')) if INTERACTIVE_INPUT else 58
 
 # Define the lens rotation
 alpha = float(input('Rotation angle, down-up direction. Range[0,90] degrees, 90 means exact down:')) if INTERACTIVE_INPUT else 12
-beta = float(input('Rotation angle, left-right direction. Range[0,90] degrees, 90 means exact left:')) if INTERACTIVE_INPUT else 17
+beta = float(input('Rotation angle, left-right direction. Range[0,90] degrees, 90 means exact left:')) if INTERACTIVE_INPUT else 10
 
 # Define the side eye angle
-side_eye_angle = float(input('Side eye angle. Range[0,25] degrees:')) if INTERACTIVE_INPUT else 0
+side_eye_angle = float(input('Side eye angle. Range[0,45] degrees:')) if INTERACTIVE_INPUT else 25
 print('\n')
 
 
@@ -74,8 +75,8 @@ def xyz_from_alpha_beta(alpha, beta):
         y = 0
         z = 0
     else:
-        x = math.sqrt(B / (A + B + 1))
-        y = -math.sqrt(A / (A + B + 1))
+        x = np.sign(beta)*math.sqrt(B / (A + B + 1))
+        y = -np.sign(alpha)*math.sqrt(A / (A + B + 1))
         z = math.sqrt(1 / (A + B + 1))
     return x,y,z
 
@@ -359,15 +360,17 @@ intersection_voxels = voxel_list_remove_zero[intersection_indices]
 intersection_colors_list = colors_list[intersection_indices]
 head_hits = accumulation_remove_zero[intersection_indices]
 
-print(f'Size of voxel:{PITCH} mm')
+print(f'Size of voxel:{PITCH*1000} mm')
 print(f'Lens working distance:{working_distance} mm')
 print(f'Lens diameter:{lens_diameter} mm')
 print(f'Rotation angle, down-up direction:{alpha} degrees')
 print(f'Rotation angle, left-right direction:{beta} degrees')
 print(f'Side eye angle:{side_eye_angle} degrees')
+print('\n')
 
 if len(head_hits) > 0:
-    print(f'max head_hits:{max(head_hits)}')
+    print(f'max head hits:{max(head_hits)}')
+    print(f'hit ratio:{np.around(float(max(head_hits))/53,4)*100}%')
     intersection_multi_heads = trimesh.PointCloud(vertices=intersection_voxels, colors=intersection_colors_list)
 
     scene_voxel_intersection = trimesh.Scene()
