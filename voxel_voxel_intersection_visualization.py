@@ -22,7 +22,7 @@ Head3 = 1203
 MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 CUT_LENS = False
-INTERACTIVE_INPUT = False
+INTERACTIVE_INPUT = True
 
 # Define a cylinder volumn where the hits should be ignored
 # BOX1_HEIGHT_UPPER = 0.007
@@ -41,19 +41,19 @@ DEPTH_IGNORE = 0.03
 eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 
-PITCH_TEMP = float(input('Size of voxel. Only [0.5, 1, 5] mm allowed. The smaller, the more accurate:')) if INTERACTIVE_INPUT else 0.5
-PITCH = PITCH_TEMP/1000
+# PITCH_TEMP = float(input('Size of voxel. Only [0.4, 0.5, 1] mm allowed. The smaller, the more accurate:')) if INTERACTIVE_INPUT else 0.4
+PITCH = 0.0004
 working_distance = float(input('Working distance of lens. Range [0,50] mm:')) if INTERACTIVE_INPUT else 10
 lens_diameter = float(input('Lens diameter. Range [20, 80] mm:')) if INTERACTIVE_INPUT else 58
 
+# Define the eye rotation
+eye_alpha = float(input('EYE rotation angle, down-up direction. Range[0,90] degrees, 90 means exact down:')) if INTERACTIVE_INPUT else 12
+eye_beta = float(input('EYE rotation angle, left-right direction. Range[0,90] degrees, 90 means exact left:')) if INTERACTIVE_INPUT else 17
+
 # Define the lens rotation
-alpha = float(input('Rotation angle, down-up direction. Range[0,90] degrees, 90 means exact down:')) if INTERACTIVE_INPUT else 12
-beta = float(input('Rotation angle, left-right direction. Range[0,90] degrees, 90 means exact left:')) if INTERACTIVE_INPUT else 10
-
-# Define the side eye angle
-side_eye_angle = float(input('Side eye angle. Range[0,45] degrees:')) if INTERACTIVE_INPUT else 25
+lens_alpha = float(input('LENS rotation angle, down-up direction. Range[0,90] degrees, 90 means exact down:')) if INTERACTIVE_INPUT else 12
+lens_beta = float(input('LENS rotation angle, left-right direction. Range[0,90] degrees, 90 means exact left:')) if INTERACTIVE_INPUT else 17
 print('\n')
-
 
 def xyz_from_alpha_beta(alpha, beta):
     """ Find the destination coordinate of lens (x,y,z) after rotation defined by alpha and beta
@@ -227,7 +227,7 @@ cone_top = [0, 0, -eye_ball_shift[2]]
 cone_lens_key_points = trimesh.points.PointCloud(vertices=[cone_top, cone_lens_center], colors=(255, 255, 0))
 cone_lens_top_point = trimesh.points.PointCloud(vertices=[cone_top], colors=(255, 255, 0))
 
-x,y,z = xyz_from_alpha_beta(alpha, beta+side_eye_angle)
+x,y,z = xyz_from_alpha_beta(lens_alpha, lens_beta)
 
 # Calculate the rotation matrix between initial direction vector [0,0,1) and (x,y,z)
 R = rotation_matrix_from_vectors((0,0,1), (x,y,z))
@@ -239,7 +239,7 @@ cone_lens.apply_transform(Rotation_front)
 cone_lens_key_points.apply_transform(Rotation_front)
 
 # Translate the lens to final position
-x_side,y_side,z_side = xyz_from_alpha_beta(alpha, beta)
+x_side,y_side,z_side = xyz_from_alpha_beta(eye_alpha, eye_beta)
 
 R = rotation_matrix_from_vectors((0,0,1), (x_side,y_side,z_side))
 Rotation_side = np.eye(4)
@@ -363,9 +363,10 @@ head_hits = accumulation_remove_zero[intersection_indices]
 print(f'Size of voxel:{PITCH*1000} mm')
 print(f'Lens working distance:{working_distance} mm')
 print(f'Lens diameter:{lens_diameter} mm')
-print(f'Rotation angle, down-up direction:{alpha} degrees')
-print(f'Rotation angle, left-right direction:{beta} degrees')
-print(f'Side eye angle:{side_eye_angle} degrees')
+print(f'EYE rotation angle, down-up direction:{eye_alpha} degrees')
+print(f'EYE rotation angle, left-right direction:{eye_beta} degrees')
+print(f'LENS rotation angle, down-up direction:{lens_alpha} degrees')
+print(f'LENS rotation angle, left-right direction:{lens_beta} degrees')
 print('\n')
 
 if len(head_hits) > 0:
