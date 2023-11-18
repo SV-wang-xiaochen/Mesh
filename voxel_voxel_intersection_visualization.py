@@ -41,6 +41,8 @@ DEPTH_IGNORE = 0.03
 eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 
+marker = trimesh.creation.axis(origin_size=0.0004, transform=None, origin_color=None, axis_radius=0.0002, axis_length=0.1)
+
 while True:
     flag = input('输入y继续，输入n退出:') if INTERACTIVE_INPUT else 'y'
     if flag == 'y':
@@ -313,6 +315,7 @@ while True:
         # scene.add_geometry(cylinder_pcl)
 
         # Visualize the trimesh
+        scene.add_geometry(marker)
         scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
         scene_voxel = trimesh.Scene()
@@ -331,6 +334,7 @@ while True:
         scene_voxel.add_geometry(lens_pcl)
         scene_voxel.add_geometry(multi_heads)
 
+        scene_voxel.add_geometry(marker)
         scene_voxel.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
         z_step = round((voxel_center_max[2]-voxel_center_min[2])/PITCH+1)
@@ -391,6 +395,7 @@ while True:
                 mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
                 mesh_original.visual.face_colors = [64, 64, 64, 50]
                 scene_voxel_intersection.add_geometry(mesh_original)
+            scene_voxel_intersection.add_geometry(marker)
             scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
         else:
             print('NO intersection')
