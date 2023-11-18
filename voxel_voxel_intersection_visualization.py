@@ -42,20 +42,20 @@ eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBal
 lens_half_height_after_cut = 22
 
 while True:
-    flag = input('Enter y to continue, Enter n to exit:') if INTERACTIVE_INPUT else 'y'
+    flag = input('输入y继续，输入n退出:') if INTERACTIVE_INPUT else 'y'
     if flag == 'y':
         # PITCH_TEMP = float(input('Size of voxel. Only [0.4, 0.5, 1] mm allowed. The smaller, the more accurate:')) if INTERACTIVE_INPUT else 0.4
         PITCH = 0.0004
-        working_distance = float(input('Working distance of lens. Range [0,50] mm:')) if INTERACTIVE_INPUT else 10
-        lens_diameter = float(input('Lens diameter. Range [20, 80] mm:')) if INTERACTIVE_INPUT else 58
+        working_distance = float(input('工作距离[0,45]mm:')) if INTERACTIVE_INPUT else 10
+        lens_diameter = float(input('镜片直径[20,80]mm:')) if INTERACTIVE_INPUT else 58
 
         # Define the lens rotation
-        lens_alpha = float(input('LENS rotation angle, down-up direction. Range[-90,90] degrees, + means up, - means down:')) if INTERACTIVE_INPUT else 12
-        lens_beta = float(input('LENS rotation angle, left-right direction. Range[-90,90] degrees, + means right, - means left:')) if INTERACTIVE_INPUT else 17
+        lens_alpha = float(input('镜片俯仰角[-90,90]度(+仰,-俯):')) if INTERACTIVE_INPUT else 12
+        lens_beta = float(input('镜片内外旋角[-90,90]度(+内旋,-外旋):')) if INTERACTIVE_INPUT else 17
 
         # Define the eye rotation
-        eye_alpha = float(input('EYE rotation angle, down-up direction. Range[-90,90] degrees, + means down, - means up:')) if INTERACTIVE_INPUT else 12
-        eye_beta = float(input('EYE rotation angle, left-right direction. Range[-90,90] degrees, + means left, - means right:')) if INTERACTIVE_INPUT else 17
+        eye_alpha = float(input('眼睛俯仰角[-90,90]度(+俯,-仰):')) if INTERACTIVE_INPUT else 12
+        eye_beta = float(input('眼睛内外旋角[-90,90]度(+外旋,-内旋):')) if INTERACTIVE_INPUT else 17
 
         print('\n')
 
@@ -364,18 +364,19 @@ while True:
         intersection_colors_list = colors_list[intersection_indices]
         head_hits = accumulation_remove_zero[intersection_indices]
 
-        print(f'Size of voxel:{PITCH*1000} mm')
-        print(f'Lens working distance:{working_distance} mm')
-        print(f'Lens diameter:{lens_diameter} mm')
-        print(f'EYE rotation angle, down-up direction:{eye_alpha} degrees')
-        print(f'EYE rotation angle, left-right direction:{eye_beta} degrees')
-        print(f'LENS rotation angle, down-up direction:{lens_alpha} degrees')
-        print(f'LENS rotation angle, left-right direction:{lens_beta} degrees')
+        print(f'Voxel尺寸:{PITCH*1000} mm')
+        print(f'工作距离:{working_distance} mm')
+        print(f'镜片直径:{lens_diameter} mm')
+        print(f'镜片俯仰角(+仰,-俯):{lens_alpha} 度')
+        print(f'镜片内外旋角(+内旋,-外旋):{lens_beta} 度')
+        print(f'眼睛俯仰角(+俯,-仰):{eye_alpha} 度')
+        print(f'眼睛内外旋角(+外旋,-内旋):{eye_beta} 度')
         print('\n')
 
         if len(head_hits) > 0:
-            print(f'max head hits:{max(head_hits)}')
-            print(f'hit ratio:{np.around(float(max(head_hits))/53,4)*100}%')
+            print(f'碰撞人头数/总人头数:{max(head_hits)}/{len(obj_list)}')
+            print(f'碰撞几率:{np.around(float(max(head_hits))/53,4)*100}%')
+            print('\n')
             intersection_multi_heads = trimesh.PointCloud(vertices=intersection_voxels, colors=intersection_colors_list)
 
             scene_voxel_intersection = trimesh.Scene()
