@@ -1,6 +1,7 @@
 import trimesh
 import numpy as np
 from bottom_vertex_index import bottom_vertex_index
+from mouth_vertex_index import mouth_vertex_index
 import glob
 import random
 
@@ -65,8 +66,8 @@ for mesh_nr in range(0, num_of_heads):
     print(f'Mesh number:{mesh_nr}')
     head_mesh = trimesh.load_mesh(obj_list[mesh_nr])
 
+    # seal the bottom
     bottom_vertex = head_mesh.vertices[bottom_vertex_index]
-    bottom_vertex_pcl = trimesh.PointCloud(vertices=bottom_vertex)
     hole_boundary_vertices = bottom_vertex
 
     bottom_vertices_np = np.array(hole_boundary_vertices)
@@ -78,11 +79,26 @@ for mesh_nr in range(0, num_of_heads):
     from scipy.spatial import Delaunay
     tri = Delaunay(bottom_vertices_selected)
 
-    faces = np.array(tri.simplices)
-    converted_faces = np.array([bottom_vertex_index[val] for row in faces for val in row]).reshape(faces.shape)
+    bottom_faces = np.array(tri.simplices)
+    bottom_converted_faces = np.array([bottom_vertex_index[val] for row in bottom_faces for val in row]).reshape(bottom_faces.shape)
 
     # Add the new faces to the mesh
-    head_mesh.faces = np.append(head_mesh.faces, converted_faces, axis=0)
+    head_mesh.faces = np.append(head_mesh.faces, bottom_converted_faces, axis=0)
+
+    # seal the mouth
+    mouth_vertex = head_mesh.vertices[mouth_vertex_index]
+    hole_boundary_vertices = mouth_vertex
+
+    mouth_vertices_np = np.array(hole_boundary_vertices)
+    mouth_vertices_selected = mouth_vertices_np[:,:2]
+
+    tri = Delaunay(mouth_vertices_selected)
+
+    mouth_faces = np.array(tri.simplices)
+    mouth_converted_faces = np.array([mouth_vertex_index[val] for row in mouth_faces for val in row]).reshape(mouth_faces.shape)
+
+    # Add the new faces to the mesh
+    head_mesh.faces = np.append(head_mesh.faces, mouth_converted_faces, axis=0)
 
     ####################### remove unrelated voxel #######################
     x1_voxel_limit = voxel_center_min[0]
