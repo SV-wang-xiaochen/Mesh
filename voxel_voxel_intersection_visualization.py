@@ -22,16 +22,8 @@ Head3 = 1203
 MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 CUT_LENS = False
-INTERACTIVE_INPUT = False
-
-# Define a cylinder volumn where the hits should be ignored
-# BOX1_HEIGHT_UPPER = 0.007
-# BOX1_HEIGHT_LOWER = 0.015
-# BOX1_WIDTH = 0.014
-#
-# BOX2_HEIGHT_UPPER = 0.006
-# BOX2_HEIGHT_LOWER = 0.014
-# BOX2_WIDTH = 0.025
+INTERACTIVE_INPUT = True
+SHOW_LIGHT_BLOCK = False
 
 CYLINDER_RADIUS = 0.012
 CYLINDER_Y_SHIFT = -0.003
@@ -39,7 +31,7 @@ CYLINDER_Y_SHIFT = -0.003
 DEPTH_IGNORE = 0.03
 
 LENS_THICKNESS = 0.01
-LENS_CONE_GAP = 4
+LENS_CONE_GAP = 1
 
 eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
@@ -90,7 +82,7 @@ while True:
         scene.add_geometry(eye_ball_key_points)
 
         # #######################  create light cone and lens #######################
-        light_cone_radius = (working_distance-LENS_CONE_GAP)*lens_diameter/working_distance/2000
+        light_cone_radius = lens_diameter/2000*0.5
         light_cone = trimesh.creation.cone(light_cone_radius, -(working_distance-LENS_CONE_GAP)/1000)
         light_cone.apply_translation([0, 0, working_distance/1000-eye_ball_shift[2]-LENS_CONE_GAP/1000])
 
@@ -136,7 +128,10 @@ while True:
 
         light_cone.visual.face_colors = [0, 64, 64, 100]
         lens.visual.face_colors = [64, 64, 64, 100]
-        scene.add_geometry(light_cone)
+
+        if SHOW_LIGHT_BLOCK:
+            scene.add_geometry(light_cone)
+
         scene.add_geometry(lens)
         scene.add_geometry(cone_lens_key_points)
 
@@ -173,12 +168,12 @@ while True:
         scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
         #######################  Show Overlapping Voxelization  #######################
+        if SHOW_LIGHT_BLOCK:
+            voxelized_light_cone = light_cone.voxelized(PITCH).fill()
+            light_cone_voxelization = np.around(np.array(voxelized_light_cone.points),4)
+            light_cone_pcl = trimesh.PointCloud(vertices=np.array(light_cone_voxelization), colors=[0, 255, 0, 100])
 
-        voxelized_light_cone = light_cone.voxelized(PITCH).fill()
-        light_cone_voxelization = np.around(np.array(voxelized_light_cone.points),4)
-        light_cone_pcl = trimesh.PointCloud(vertices=np.array(light_cone_voxelization), colors=[0, 255, 0, 100])
-
-        # scene.add_geometry(light_cone_pcl)
+            # scene.add_geometry(light_cone_pcl)
 
         voxelized_lens = lens.voxelized(PITCH).fill()
         lens_voxelization = np.around(np.array(voxelized_lens.points),4)
@@ -195,13 +190,14 @@ while True:
         scene_voxel_lens.add_geometry(marker)
         scene_voxel_lens.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':5})
 
-        scene_voxel_light_cone = trimesh.Scene()
-        scene_voxel_light_cone.add_geometry(eye_ball_key_points)
-        scene_voxel_light_cone.add_geometry(light_cone_pcl)
-        scene_voxel_light_cone.add_geometry(multi_heads)
+        if SHOW_LIGHT_BLOCK:
+            scene_voxel_light_cone = trimesh.Scene()
+            scene_voxel_light_cone.add_geometry(eye_ball_key_points)
+            scene_voxel_light_cone.add_geometry(light_cone_pcl)
+            scene_voxel_light_cone.add_geometry(multi_heads)
 
-        scene_voxel_light_cone.add_geometry(marker)
-        scene_voxel_light_cone.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':5})
+            scene_voxel_light_cone.add_geometry(marker)
+            scene_voxel_light_cone.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':5})
 
         #######################  Show Intersection Heat Map  #######################
         z_step = round((voxel_center_max[2]-voxel_center_min[2])/PITCH+1)
@@ -223,19 +219,20 @@ while True:
         head_voxel_list = voxel_list_remove_zero.tolist()
         head_voxel_indices = list(map(voxel2index, head_voxel_list))
 
-        # calculate light blocks
-        light_cone_list = light_cone_voxelization.tolist()
-        light_cone_indices = list(map(voxel2index, light_cone_list))
+        if SHOW_LIGHT_BLOCK:
+            # calculate light blocks
+            light_cone_list = light_cone_voxelization.tolist()
+            light_cone_indices = list(map(voxel2index, light_cone_list))
 
-        cylinder_list = cylinder_voxelization.tolist()
-        cylinder_voxel_indices = list(map(voxel2index, cylinder_list))
+            cylinder_list = cylinder_voxelization.tolist()
+            cylinder_voxel_indices = list(map(voxel2index, cylinder_list))
 
-        valid_light_cone_indices = list(np.setdiff1d(np.array(light_cone_indices), np.array(cylinder_voxel_indices), True))
-        _, light_block_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(valid_light_cone_indices), return_indices=True)
+            valid_light_cone_indices = list(np.setdiff1d(np.array(light_cone_indices), np.array(cylinder_voxel_indices), True))
+            _, light_block_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(valid_light_cone_indices), return_indices=True)
 
-        block_voxels = voxel_list_remove_zero[light_block_indices]
-        block_colors_list = colors_list[light_block_indices]
-        blocks = accumulation_remove_zero[light_block_indices]
+            block_voxels = voxel_list_remove_zero[light_block_indices]
+            block_colors_list = colors_list[light_block_indices]
+            blocks = accumulation_remove_zero[light_block_indices]
 
         # calculate lens hits
         lens_list = lens_voxelization.tolist()
@@ -256,43 +253,12 @@ while True:
         print(f'眼睛内外旋角(+外旋,-内旋):{eye_beta} 度')
         print('\n')
 
-        if len(blocks)>0:
-            print(f'光路遮挡人头数/总人头数:{max(blocks)}/{len(obj_list)}')
-            print(f'光路遮挡几率:{np.around(float(max(blocks))/53,4)*100}%')
-            print('\n')
-
-            intersection_colors_np = np.array(block_colors_list)
-            intersection_colors_np[:, 3] = 0.9
-            intersection_multi_heads = trimesh.PointCloud(vertices=block_voxels, colors=list(intersection_colors_np))
-
-            scene_voxel_intersection = trimesh.Scene()
-            scene_voxel_intersection.add_geometry(intersection_multi_heads)
-            scene_voxel_intersection.add_geometry(eye_ball_key_points)
-            scene_voxel_intersection.add_geometry(lens_center)
-
-            path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
-            obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
-
-            for mesh_nr in range(0, len(obj_list)):
-                mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-                mesh_original.visual.face_colors = [64, 64, 64, 100]
-                scene_voxel_intersection.add_geometry(mesh_original)
-            scene_voxel_intersection.add_geometry(lens_rim)
-            scene_voxel_intersection.add_geometry(cone_lens_key_points)
-            scene_voxel_intersection.add_geometry(marker)
-            # saveSceneImage(scene_voxel_intersection, '3.png')
-            scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':10})
-        else:
-            print('无光路遮挡')
-
         if len(hits)>0:
             print(f'镜片碰撞人头数/总人头数:{max(hits)}/{len(obj_list)}')
             print(f'镜片碰撞几率:{np.around(float(max(hits))/53,4)*100}%')
             print('\n')
 
-            intersection_colors_np = np.array(hit_colors_list)
-            intersection_colors_np[:, 3] = 0.9
-            intersection_multi_heads = trimesh.PointCloud(vertices=hit_voxels, colors=list(intersection_colors_np))
+            intersection_multi_heads = trimesh.PointCloud(vertices=hit_voxels, colors=hit_colors_list)
 
             scene_voxel_intersection = trimesh.Scene()
             scene_voxel_intersection.add_geometry(intersection_multi_heads)
@@ -312,7 +278,35 @@ while True:
             # saveSceneImage(scene_voxel_intersection, '3.png')
             scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':10})
         else:
-            print('无遮挡')
+            print('无碰撞')
+
+        if SHOW_LIGHT_BLOCK:
+            if len(blocks)>0:
+                print(f'光路遮挡人头数/总人头数:{max(blocks)}/{len(obj_list)}')
+                print(f'光路遮挡几率:{np.around(float(max(blocks))/53,4)*100}%')
+                print('\n')
+
+                intersection_multi_heads = trimesh.PointCloud(vertices=block_voxels, colors=block_colors_list)
+
+                scene_voxel_intersection = trimesh.Scene()
+                scene_voxel_intersection.add_geometry(intersection_multi_heads)
+                scene_voxel_intersection.add_geometry(eye_ball_key_points)
+                scene_voxel_intersection.add_geometry(lens_center)
+
+                path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
+                obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
+
+                for mesh_nr in range(0, len(obj_list)):
+                    mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
+                    mesh_original.visual.face_colors = [64, 64, 64, 100]
+                    scene_voxel_intersection.add_geometry(mesh_original)
+                scene_voxel_intersection.add_geometry(lens_rim)
+                scene_voxel_intersection.add_geometry(cone_lens_key_points)
+                scene_voxel_intersection.add_geometry(marker)
+                # saveSceneImage(scene_voxel_intersection, '3.png')
+                scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':10})
+            else:
+                print('无遮挡')
 
     elif flag == 'n':
         break
