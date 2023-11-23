@@ -6,35 +6,7 @@ import numpy as np
 import copy
 import random
 import math
-from utils import xyz_from_alpha_beta, intersection_elements, generate_random_color, rotation_matrix_from_vectors, angle_between_two_vectors, ellipsoid, trimesh2open3d, o3dTriangleMesh2PointCloud
-
-def createCircle(center, radius):
-
-    # Create an array of angles to parametrically define the circle
-    num_points = 100  # Number of points to create the circle
-    theta = np.linspace(0, 2 * np.pi, num_points)
-
-    # Parametric equations to generate points on the circle
-    x = radius * np.cos(theta) + center[0]
-    y = radius * np.sin(theta) + center[1]
-    z = np.full(num_points, center[2])  # Constant z-coordinate
-
-    # Create an array to store the line segments
-    circle_segments = []
-
-    # Connect the points to create line segments
-    for i in range(num_points - 1):
-        circle_segments.append([[x[i], y[i], z[i]], [x[i + 1], y[i + 1], z[i + 1]]])
-
-    # Connect the last point to the first point to close the circle
-    circle_segments.append([[x[-1], y[-1], z[-1]], [x[0], y[0], z[0]]])
-
-    # Convert the line segments to a NumPy array
-    circle_segments = np.array(circle_segments)
-
-    circle = trimesh.load_path(circle_segments)
-
-    return circle
+from utils import xyz_from_alpha_beta, intersection_elements, generate_random_color, rotation_matrix_from_vectors, angle_between_two_vectors, ellipsoid, trimesh2open3d, o3dTriangleMesh2PointCloud, createCircle, saveSceneImage
 
 
 SHOW_WIREFRAME = False
@@ -42,7 +14,6 @@ ONLY_SHOW_INTERSECTION = False
 NOT_SHOW_MESH = False # Do not show any mesh. Only show the intersection and lens
 SHOW_FULL_MESH = True # Show full mesh or ONLY "mesh of interest" which is used to find the intersection with lens plane
 
-MESH_NR = 0
 LeftEyeFront = 4043
 LeftEyeRear = 4463
 Head1 = 1726
@@ -82,19 +53,16 @@ while True:
 
         # Define the lens rotation
         lens_alpha = float(input('镜片俯仰角[-90,90]度(+仰,-俯):')) if INTERACTIVE_INPUT else 12
-        lens_beta = float(input('镜片内外旋角[-90,90]度(+内旋,-外旋):')) if INTERACTIVE_INPUT else 17
+        lens_beta = float(input('镜片内外旋角[-90,90]度(+内旋,-外旋):')) if INTERACTIVE_INPUT else 25
 
         # Define the eye rotation
-        eye_alpha = float(input('眼睛俯仰角[-90,90]度(+俯,-仰):')) if INTERACTIVE_INPUT else 23
-        eye_beta = float(input('眼睛内外旋角[-90,90]度(+外旋,-内旋):')) if INTERACTIVE_INPUT else 45
+        eye_alpha = float(input('眼睛俯仰角[-90,90]度(+俯,-仰):')) if INTERACTIVE_INPUT else 12
+        eye_beta = float(input('眼睛内外旋角[-90,90]度(+外旋,-内旋):')) if INTERACTIVE_INPUT else 10
 
         print('\n')
 
         path = './voxel_results/FLORENCE'
         obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
-
-        mesh_original = trimesh.load_mesh(obj_list[MESH_NR])
-        mesh_original.visual.face_colors = [64, 64, 64, 100]
 
         scene = trimesh.Scene()
 
@@ -102,40 +70,6 @@ while True:
         eye_ball_key_points = trimesh.points.PointCloud(vertices=[[0, 0, -eye_ball_shift[2]],[0,0,0]], colors=(0, 255, 0))
 
         scene.add_geometry(eye_ball_key_points)
-
-        mesh = copy.deepcopy(mesh_original)
-
-        ####################### remove unrelated mesh #######################
-        x1 = (mesh.vertices[Head1][0] + mesh.vertices[Head2][0] + mesh.vertices[Head3][0])/3
-        y1 = mesh.vertices[MOUTH_ABOVE][1]
-        y2 = mesh.vertices[BROW_ABOVE][1]
-        z1 = mesh.vertices[LeftEyeRear][2]
-
-        vertices = mesh.vertices
-        vertices_mask = vertices[:,0] > x1
-        face_mask = vertices_mask[mesh.faces].all(axis=1)
-        mesh.update_faces(face_mask)
-
-        vertices = mesh.vertices
-        vertices_mask = vertices[:,1] < y2
-        face_mask = vertices_mask[mesh.faces].all(axis=1)
-        mesh.update_faces(face_mask)
-
-        vertices = mesh.vertices
-        vertices_mask = vertices[:,1] > y1
-        face_mask = vertices_mask[mesh.faces].all(axis=1)
-        mesh.update_faces(face_mask)
-
-        vertices = mesh.vertices
-        vertices_mask = vertices[:,2] > z1
-        face_mask = vertices_mask[mesh.faces].all(axis=1)
-        mesh.update_faces(face_mask)
-
-        if not NOT_SHOW_MESH:
-            if SHOW_FULL_MESH:
-                scene.add_geometry(mesh_original)
-            else:
-                scene.add_geometry(mesh)
 
         # #######################  create cone lens  #######################
 
@@ -183,7 +117,7 @@ while True:
 
         voxelized_cone_lens = cone_lens.voxelized(PITCH).fill()
         lens_voxelization = np.around(np.array(voxelized_cone_lens.points),4)
-        lens_pcl = trimesh.PointCloud(vertices=np.array(lens_voxelization), colors=[0, 0, 255, 1])
+        lens_pcl = trimesh.PointCloud(vertices=np.array(lens_voxelization), colors=[0, 0, 255, 100])
 
         # scene.add_geometry(lens_pcl)
 
@@ -204,7 +138,7 @@ while True:
 
         for mesh_nr in range(0, len(obj_list)):
             mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-            mesh_original.visual.face_colors = [64, 64, 64, 50]
+            mesh_original.visual.face_colors = [10, 10, 10, 100]
             scene.add_geometry(mesh_original)
 
         # #######################  create a volumn around cornea center where the head hits should be ignored  #######################
@@ -237,6 +171,14 @@ while True:
 
         # Visualize the trimesh
         scene.add_geometry(marker)
+        # saveSceneImage(scene, '1.png')
+
+        # Access the camera in the scene
+        camera = scene.camera
+
+        # # set camera orientation
+        # scene.set_camera((90 / 180 * np.pi, 90 / 180 * np.pi, 0 / 180 * np.pi))
+
         scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
         scene_voxel = trimesh.Scene()
@@ -250,17 +192,18 @@ while True:
         voxel_center_max = np.load(f"voxel_results/voxel_center_max_{PITCH}.npy")
 
         colors_np = np.array(colors_list)
-        colors_np[:, 3] = 0.3
+        colors_np[:, 3] = 0.1
 
         multi_heads = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=list(colors_np))
 
         scene_voxel.add_geometry(eye_ball_key_points)
         scene_voxel.add_geometry(lens_pcl)
         scene_voxel.add_geometry(multi_heads)
-        scene_voxel.add_geometry(lens_rim)
+        # scene_voxel.add_geometry(lens_rim)
 
         scene_voxel.add_geometry(marker)
-        scene_voxel.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
+        # saveSceneImage(scene_voxel, '2.png')
+        scene_voxel.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':5})
 
         z_step = round((voxel_center_max[2]-voxel_center_min[2])/PITCH+1)
         y_step = round((voxel_center_max[1]-voxel_center_min[1])/PITCH+1)
@@ -321,12 +264,13 @@ while True:
 
             for mesh_nr in range(0, len(obj_list)):
                 mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-                mesh_original.visual.face_colors = [64, 64, 64, 50]
+                mesh_original.visual.face_colors = [64, 64, 64, 100]
                 scene_voxel_intersection.add_geometry(mesh_original)
             scene_voxel_intersection.add_geometry(lens_rim)
             scene_voxel_intersection.add_geometry(cone_lens_key_points)
             scene_voxel_intersection.add_geometry(marker)
-            scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
+            # saveSceneImage(scene_voxel_intersection, '3.png')
+            scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':10})
         else:
             print('NO intersection')
 

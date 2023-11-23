@@ -6,6 +6,8 @@ import numpy as np
 import copy
 import random
 import math
+import io
+import PIL.Image as Image
 
 def xyz_from_alpha_beta(alpha, beta):
     """ Find the destination coordinate of lens (x,y,z) after rotation defined by alpha and beta
@@ -121,4 +123,39 @@ def o3dTriangleMesh2PointCloud(mesh):
     point_cloud.points = o3d.utility.Vector3dVector(vertices)
 
     return point_cloud
+
+
+def createCircle(center, radius):
+
+    # Create an array of angles to parametrically define the circle
+    num_points = 100  # Number of points to create the circle
+    theta = np.linspace(0, 2 * np.pi, num_points)
+
+    # Parametric equations to generate points on the circle
+    x = radius * np.cos(theta) + center[0]
+    y = radius * np.sin(theta) + center[1]
+    z = np.full(num_points, center[2])  # Constant z-coordinate
+
+    # Create an array to store the line segments
+    circle_segments = []
+
+    # Connect the points to create line segments
+    for i in range(num_points - 1):
+        circle_segments.append([[x[i], y[i], z[i]], [x[i + 1], y[i + 1], z[i + 1]]])
+
+    # Connect the last point to the first point to close the circle
+    circle_segments.append([[x[-1], y[-1], z[-1]], [x[0], y[0], z[0]]])
+
+    # Convert the line segments to a NumPy array
+    circle_segments = np.array(circle_segments)
+
+    circle = trimesh.load_path(circle_segments)
+
+    return circle
+
+
+def saveSceneImage(scene, path):
+    bytes_ = scene.save_image()
+    image = Image.open(io.BytesIO(bytes_))
+    image.save(path)
 
