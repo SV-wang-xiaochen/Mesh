@@ -38,6 +38,9 @@ CYLINDER_Y_SHIFT = -0.003
 
 DEPTH_IGNORE = 0.03
 
+LENS_THICKNESS = 0.01
+LENS_CONE_GAP = 1
+
 eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 
@@ -72,9 +75,9 @@ while True:
         scene.add_geometry(eye_ball_key_points)
 
         # #######################  create cone lens  #######################
-
-        cone_lens = trimesh.creation.cone(lens_diameter/2000, -working_distance/1000)
-        cone_lens.apply_translation([0, 0, working_distance/1000-eye_ball_shift[2]])
+        cone_radius = (working_distance-LENS_CONE_GAP)*lens_diameter/working_distance/2000
+        cone_lens = trimesh.creation.cone(cone_radius, -(working_distance-LENS_CONE_GAP)/1000)
+        cone_lens.apply_translation([0, 0, working_distance/1000-eye_ball_shift[2]-LENS_CONE_GAP/1000])
 
         cone_lens_center = [0, 0, working_distance/1000-eye_ball_shift[2]]
         cone_top = [0, 0, -eye_ball_shift[2]]
@@ -138,27 +141,28 @@ while True:
 
         for mesh_nr in range(0, len(obj_list)):
             mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-            mesh_original.visual.face_colors = [10, 10, 10, 100]
+            mesh_original.visual.face_colors = generate_random_color()
             scene.add_geometry(mesh_original)
 
-        # #######################  create a volumn around cornea center where the head hits should be ignored  #######################
-        # volumn1_ignore = trimesh.creation.box([BOX1_WIDTH, BOX1_HEIGHT_UPPER+BOX1_HEIGHT_LOWER, DEPTH_IGNORE])
-        # volumn1_ignore.apply_translation([0, (BOX1_HEIGHT_UPPER+BOX1_HEIGHT_LOWER)/2-BOX1_HEIGHT_LOWER, DEPTH_IGNORE/2])
-        # # scene.add_geometry(volumn1_ignore)
-        #
-        # voxelized_volumn1 = volumn1_ignore.voxelized(PITCH).fill()
-        # volumn1_voxelization = np.around(np.array(voxelized_volumn1.points),4)
-        # volumn1_pcl = trimesh.PointCloud(vertices=np.array(volumn1_voxelization), colors=[255, 0, 255, 100])
-        # # scene.add_geometry(cylinder_pcl)
-        #
-        # volumn2_ignore = trimesh.creation.box([BOX2_WIDTH, BOX2_HEIGHT_UPPER+BOX2_HEIGHT_LOWER, DEPTH_IGNORE])
-        # volumn2_ignore.apply_translation([0, (BOX2_HEIGHT_UPPER+BOX2_HEIGHT_LOWER)/2-BOX2_HEIGHT_LOWER, DEPTH_IGNORE/2])
-        # # scene.add_geometry(volumn2_ignore)
-        #
-        # voxelized_volumn2= volumn2_ignore.voxelized(PITCH).fill()
-        # volumn2_voxelization = np.around(np.array(voxelized_volumn2.points),4)
-        # volumn2_pcl = trimesh.PointCloud(vertices=np.array(volumn2_voxelization), colors=[255, 0, 255, 100])
-        # # scene.add_geometry(cylinder_pcl)
+        # # #######################  create a volumn around cornea center where the head hits should be ignored  #######################
+        # # volumn1_ignore = trimesh.creation.box([BOX1_WIDTH, BOX1_HEIGHT_UPPER+BOX1_HEIGHT_LOWER, DEPTH_IGNORE])
+        # # volumn1_ignore.apply_translation([0, (BOX1_HEIGHT_UPPER+BOX1_HEIGHT_LOWER)/2-BOX1_HEIGHT_LOWER, DEPTH_IGNORE/2])
+        # # # scene.add_geometry(volumn1_ignore)
+        # #
+        # # voxelized_volumn1 = volumn1_ignore.voxelized(PITCH).fill()
+        # # volumn1_voxelization = np.around(np.array(voxelized_volumn1.points),4)
+        # # volumn1_pcl = trimesh.PointCloud(vertices=np.array(volumn1_voxelization), colors=[255, 0, 255, 100])
+        # # # scene.add_geometry(cylinder_pcl)
+        # #
+        # # volumn2_ignore = trimesh.creation.box([BOX2_WIDTH, BOX2_HEIGHT_UPPER+BOX2_HEIGHT_LOWER, DEPTH_IGNORE])
+        # # volumn2_ignore.apply_translation([0, (BOX2_HEIGHT_UPPER+BOX2_HEIGHT_LOWER)/2-BOX2_HEIGHT_LOWER, DEPTH_IGNORE/2])
+        # # # scene.add_geometry(volumn2_ignore)
+        # #
+        # # voxelized_volumn2= volumn2_ignore.voxelized(PITCH).fill()
+        # # volumn2_voxelization = np.around(np.array(voxelized_volumn2.points),4)
+        # # volumn2_pcl = trimesh.PointCloud(vertices=np.array(volumn2_voxelization), colors=[255, 0, 255, 100])
+        # # # scene.add_geometry(cylinder_pcl)
+        # # #############################################################################################################################
 
         cylinder_ignore = trimesh.creation.cylinder(radius=CYLINDER_RADIUS,height=DEPTH_IGNORE)
         cylinder_ignore.apply_translation([0, CYLINDER_Y_SHIFT, DEPTH_IGNORE/2])
