@@ -1,11 +1,6 @@
-import open3d as o3d
 import trimesh
 import glob
 import numpy as np
-# import matplotlib.pyplot as plt
-import copy
-import random
-import math
 from utils import xyz_from_alpha_beta, intersection_elements, generate_random_color, rotation_matrix_from_vectors, angle_between_two_vectors, ellipsoid, trimesh2open3d, o3dTriangleMesh2PointCloud, createCircle, saveSceneImage
 
 
@@ -27,7 +22,6 @@ SHOW_LIGHT_BLOCK = False
 
 CYLINDER_RADIUS = 0.012
 CYLINDER_Y_SHIFT = -0.003
-
 DEPTH_IGNORE = 0.03
 
 LENS_THICKNESS = 0.01
@@ -39,6 +33,15 @@ lens_half_height_after_cut = 22
 marker = trimesh.creation.axis(origin_size=0.0004, transform=None, origin_color=None, axis_radius=0.0002, axis_length=0.1)
 
 PITCH = 0.0004
+
+#######################  create a cylinder where the light blocks should be ignored  #######################
+cylinder_ignore = trimesh.creation.cylinder(radius=CYLINDER_RADIUS, height=DEPTH_IGNORE)
+cylinder_ignore.apply_translation([0, CYLINDER_Y_SHIFT, DEPTH_IGNORE / 2])
+# scene.add_geometry(cylinder_ignore)
+
+voxelized_cylinder = cylinder_ignore.voxelized(PITCH).fill()
+cylinder_voxelization = np.around(np.array(voxelized_cylinder.points), 4)
+cylinder_pcl = trimesh.PointCloud(vertices=np.array(cylinder_voxelization), colors=[255, 0, 255, 100])
 
 # load prepared voxel
 num_of_heads = np.load(f"voxel_results/num_of_heads_{PITCH}.npy")
@@ -52,6 +55,17 @@ colors_np = np.array(colors_list)
 colors_np[:, 3] = 0.1
 
 multi_heads = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=list(colors_np))
+
+z_step = round((voxel_center_max[2] - voxel_center_min[2]) / PITCH + 1)
+y_step = round((voxel_center_max[1] - voxel_center_min[1]) / PITCH + 1)
+
+def voxel2index(v):
+    return round((y_step * z_step * (v[0] - voxel_center_min[0]) + z_step * (v[1] - voxel_center_min[1]) + (
+                v[2] - voxel_center_min[2])) / PITCH)
+
+head_voxel_list = voxel_list_remove_zero.tolist()
+head_voxel_indices = list(map(voxel2index, head_voxel_list))
+
 
 while True:
     flag = input('输入y继续，输入n退出:') if INTERACTIVE_INPUT else 'y'
@@ -200,24 +214,6 @@ while True:
             scene_voxel_light_cone.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':5})
 
         #######################  Show Intersection Heat Map  #######################
-        z_step = round((voxel_center_max[2]-voxel_center_min[2])/PITCH+1)
-        y_step = round((voxel_center_max[1]-voxel_center_min[1])/PITCH+1)
-
-        #######################  create a cylinder where the light blocks should be ignored  #######################
-        cylinder_ignore = trimesh.creation.cylinder(radius=CYLINDER_RADIUS,height=DEPTH_IGNORE)
-        cylinder_ignore.apply_translation([0, CYLINDER_Y_SHIFT, DEPTH_IGNORE/2])
-        # scene.add_geometry(cylinder_ignore)
-
-        voxelized_cylinder = cylinder_ignore.voxelized(PITCH).fill()
-        cylinder_voxelization = np.around(np.array(voxelized_cylinder.points),4)
-        cylinder_pcl = trimesh.PointCloud(vertices=np.array(cylinder_voxelization), colors=[255, 0, 255, 100])
-        # scene.add_geometry(cylinder_pcl)
-
-        def voxel2index(v):
-            return round((y_step*z_step*(v[0]-voxel_center_min[0])+z_step*(v[1]-voxel_center_min[1])+(v[2]-voxel_center_min[2]))/PITCH)
-
-        head_voxel_list = voxel_list_remove_zero.tolist()
-        head_voxel_indices = list(map(voxel2index, head_voxel_list))
 
         if SHOW_LIGHT_BLOCK:
             # calculate light blocks
