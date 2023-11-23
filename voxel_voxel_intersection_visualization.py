@@ -85,8 +85,8 @@ while True:
         lens_beta = float(input('镜片内外旋角[-90,90]度(+内旋,-外旋):')) if INTERACTIVE_INPUT else 17
 
         # Define the eye rotation
-        eye_alpha = float(input('眼睛俯仰角[-90,90]度(+俯,-仰):')) if INTERACTIVE_INPUT else 12
-        eye_beta = float(input('眼睛内外旋角[-90,90]度(+外旋,-内旋):')) if INTERACTIVE_INPUT else 17
+        eye_alpha = float(input('眼睛俯仰角[-90,90]度(+俯,-仰):')) if INTERACTIVE_INPUT else 23
+        eye_beta = float(input('眼睛内外旋角[-90,90]度(+外旋,-内旋):')) if INTERACTIVE_INPUT else 45
 
         print('\n')
 
@@ -168,13 +168,14 @@ while True:
         cone_lens_top_point.apply_transform(Rotation_side)
 
         cone_lens.apply_translation(cone_lens_top_point.vertices[0]-cone_lens_key_points.vertices[0])
-        cone_lens_key_points.apply_translation(cone_lens_top_point.vertices[0]-cone_lens_key_points.vertices[0])
 
         #######################  create a circle to show the rim the lens  #######################
-        circle = createCircle([0, 0, working_distance/1000-eye_ball_shift[2]], lens_diameter/2000)
-        circle.apply_transform(Rotation_front)
-        circle.apply_translation(cone_lens_top_point.vertices[0] - cone_lens_key_points.vertices[0])
-        scene.add_geometry(circle)
+        lens_rim = createCircle([0, 0, working_distance/1000-eye_ball_shift[2]], lens_diameter/2000)
+        lens_rim.apply_transform(Rotation_front)
+        lens_rim.apply_translation(cone_lens_top_point.vertices[0]-cone_lens_key_points.vertices[0])
+        scene.add_geometry(lens_rim)
+
+        cone_lens_key_points.apply_translation(cone_lens_top_point.vertices[0]-cone_lens_key_points.vertices[0])
 
         cone_lens.visual.face_colors = [0, 64, 64, 100]
         scene.add_geometry(cone_lens)
@@ -182,7 +183,7 @@ while True:
 
         voxelized_cone_lens = cone_lens.voxelized(PITCH).fill()
         lens_voxelization = np.around(np.array(voxelized_cone_lens.points),4)
-        lens_pcl = trimesh.PointCloud(vertices=np.array(lens_voxelization), colors=[0, 0, 255, 100])
+        lens_pcl = trimesh.PointCloud(vertices=np.array(lens_voxelization), colors=[0, 0, 255, 1])
 
         # scene.add_geometry(lens_pcl)
 
@@ -201,11 +202,10 @@ while True:
 
         # scene.add_geometry(sphere_mesh)
 
-
-        # for mesh_nr in range(0, len(obj_list)):
-        #     mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-        #     mesh_original.visual.face_colors = [64, 64, 64, 50]
-        #     scene.add_geometry(mesh_original)
+        for mesh_nr in range(0, len(obj_list)):
+            mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
+            mesh_original.visual.face_colors = [64, 64, 64, 50]
+            scene.add_geometry(mesh_original)
 
         # #######################  create a volumn around cornea center where the head hits should be ignored  #######################
         # volumn1_ignore = trimesh.creation.box([BOX1_WIDTH, BOX1_HEIGHT_UPPER+BOX1_HEIGHT_LOWER, DEPTH_IGNORE])
@@ -239,89 +239,98 @@ while True:
         scene.add_geometry(marker)
         scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
-    #     scene_voxel = trimesh.Scene()
-    #
-    #     # load prepared voxel
-    #     num_of_heads = np.load(f"voxel_results/num_of_heads_{PITCH}.npy")
-    #     voxel_list_remove_zero = np.load(f"voxel_results/voxel_list_remove_zero_{PITCH}.npy")
-    #     colors_list = np.load(f"voxel_results/colors_list_{PITCH}.npy")
-    #     accumulation_remove_zero = np.load(f"voxel_results/accumulation_remove_zero_{PITCH}.npy")
-    #     voxel_center_min = np.load(f"voxel_results/voxel_center_min_{PITCH}.npy")
-    #     voxel_center_max = np.load(f"voxel_results/voxel_center_max_{PITCH}.npy")
-    #
-    #     multi_heads = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=colors_list)
-    #
-    #     scene_voxel.add_geometry(eye_ball_key_points)
-    #     scene_voxel.add_geometry(lens_pcl)
-    #     scene_voxel.add_geometry(multi_heads)
-    #
-    #     scene_voxel.add_geometry(marker)
-    #     scene_voxel.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
-    #
-    #     z_step = round((voxel_center_max[2]-voxel_center_min[2])/PITCH+1)
-    #     y_step = round((voxel_center_max[1]-voxel_center_min[1])/PITCH+1)
-    #
-    #     def voxel2index(v):
-    #         return round((y_step*z_step*(v[0]-voxel_center_min[0])+z_step*(v[1]-voxel_center_min[1])+(v[2]-voxel_center_min[2]))/PITCH)
-    #
-    #     lens_list = lens_voxelization.tolist()
-    #     lens_indices = list(map(voxel2index, lens_list))
-    #
-    #     # volumn1_list = volumn1_voxelization.tolist()
-    #     # volumn1_voxel_indices = list(map(voxel2index, volumn1_list))
-    #     #
-    #     # volumn2_list = volumn2_voxelization.tolist()
-    #     # volumn2_voxel_indices = list(map(voxel2index, volumn2_list))
-    #
-    #     cylinder_list = cylinder_voxelization.tolist()
-    #     cylinder_voxel_indices = list(map(voxel2index, cylinder_list))
-    #
-    #     voxel_list = voxel_list_remove_zero.tolist()
-    #     head_voxel_indices = list(map(voxel2index, voxel_list))
-    #
-    #     # valid_lens_indices_temp = list(np.setdiff1d(np.array(lens_indices), np.array(volumn1_voxel_indices), True))
-    #     # valid_lens_indices = list(np.setdiff1d(np.array(valid_lens_indices_temp), np.array(volumn2_voxel_indices), True))
-    #
-    #     valid_lens_indices = list(np.setdiff1d(np.array(lens_indices), np.array(cylinder_voxel_indices), True))
-    #     _, intersection_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(valid_lens_indices), return_indices=True)
-    #
-    #     intersection_voxels = voxel_list_remove_zero[intersection_indices]
-    #     intersection_colors_list = colors_list[intersection_indices]
-    #     head_hits = accumulation_remove_zero[intersection_indices]
-    #
-    #     print(f'Voxel尺寸:{PITCH*1000} mm')
-    #     print(f'工作距离:{working_distance} mm')
-    #     print(f'镜片直径:{lens_diameter} mm')
-    #     print(f'镜片俯仰角(+仰,-俯):{lens_alpha} 度')
-    #     print(f'镜片内外旋角(+内旋,-外旋):{lens_beta} 度')
-    #     print(f'眼睛俯仰角(+俯,-仰):{eye_alpha} 度')
-    #     print(f'眼睛内外旋角(+外旋,-内旋):{eye_beta} 度')
-    #     print('\n')
-    #
-    #     if len(head_hits) > 0:
-    #         print(f'碰撞人头数/总人头数:{max(head_hits)}/{len(obj_list)}')
-    #         print(f'碰撞几率:{np.around(float(max(head_hits))/53,4)*100}%')
-    #         print('\n')
-    #         intersection_multi_heads = trimesh.PointCloud(vertices=intersection_voxels, colors=intersection_colors_list)
-    #
-    #         scene_voxel_intersection = trimesh.Scene()
-    #         scene_voxel_intersection.add_geometry(intersection_multi_heads)
-    #         scene_voxel_intersection.add_geometry(eye_ball_key_points)
-    #         scene_voxel_intersection.add_geometry(cone_lens_center)
-    #
-    #         path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
-    #         obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
-    #
-    #         for mesh_nr in range(0, len(obj_list)):
-    #             mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-    #             mesh_original.visual.face_colors = [64, 64, 64, 50]
-    #             scene_voxel_intersection.add_geometry(mesh_original)
-    #         scene_voxel_intersection.add_geometry(marker)
-    #         scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
-    #     else:
-    #         print('NO intersection')
-    #
-    # elif flag == 'n':
-    #     break
-    # else:
-    #     continue
+        scene_voxel = trimesh.Scene()
+
+        # load prepared voxel
+        num_of_heads = np.load(f"voxel_results/num_of_heads_{PITCH}.npy")
+        voxel_list_remove_zero = np.load(f"voxel_results/voxel_list_remove_zero_{PITCH}.npy")
+        colors_list = np.load(f"voxel_results/colors_list_{PITCH}.npy")
+        accumulation_remove_zero = np.load(f"voxel_results/accumulation_remove_zero_{PITCH}.npy")
+        voxel_center_min = np.load(f"voxel_results/voxel_center_min_{PITCH}.npy")
+        voxel_center_max = np.load(f"voxel_results/voxel_center_max_{PITCH}.npy")
+
+        colors_np = np.array(colors_list)
+        colors_np[:, 3] = 0.3
+
+        multi_heads = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=list(colors_np))
+
+        scene_voxel.add_geometry(eye_ball_key_points)
+        scene_voxel.add_geometry(lens_pcl)
+        scene_voxel.add_geometry(multi_heads)
+        scene_voxel.add_geometry(lens_rim)
+
+        scene_voxel.add_geometry(marker)
+        scene_voxel.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
+
+        z_step = round((voxel_center_max[2]-voxel_center_min[2])/PITCH+1)
+        y_step = round((voxel_center_max[1]-voxel_center_min[1])/PITCH+1)
+
+        def voxel2index(v):
+            return round((y_step*z_step*(v[0]-voxel_center_min[0])+z_step*(v[1]-voxel_center_min[1])+(v[2]-voxel_center_min[2]))/PITCH)
+
+        lens_list = lens_voxelization.tolist()
+        lens_indices = list(map(voxel2index, lens_list))
+
+        # volumn1_list = volumn1_voxelization.tolist()
+        # volumn1_voxel_indices = list(map(voxel2index, volumn1_list))
+        #
+        # volumn2_list = volumn2_voxelization.tolist()
+        # volumn2_voxel_indices = list(map(voxel2index, volumn2_list))
+
+        cylinder_list = cylinder_voxelization.tolist()
+        cylinder_voxel_indices = list(map(voxel2index, cylinder_list))
+
+        voxel_list = voxel_list_remove_zero.tolist()
+        head_voxel_indices = list(map(voxel2index, voxel_list))
+
+        # valid_lens_indices_temp = list(np.setdiff1d(np.array(lens_indices), np.array(volumn1_voxel_indices), True))
+        # valid_lens_indices = list(np.setdiff1d(np.array(valid_lens_indices_temp), np.array(volumn2_voxel_indices), True))
+
+        valid_lens_indices = list(np.setdiff1d(np.array(lens_indices), np.array(cylinder_voxel_indices), True))
+        _, intersection_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(valid_lens_indices), return_indices=True)
+
+        intersection_voxels = voxel_list_remove_zero[intersection_indices]
+        intersection_colors_list = colors_list[intersection_indices]
+        head_hits = accumulation_remove_zero[intersection_indices]
+
+        print(f'Voxel尺寸:{PITCH*1000} mm')
+        print(f'工作距离:{working_distance} mm')
+        print(f'镜片直径:{lens_diameter} mm')
+        print(f'镜片俯仰角(+仰,-俯):{lens_alpha} 度')
+        print(f'镜片内外旋角(+内旋,-外旋):{lens_beta} 度')
+        print(f'眼睛俯仰角(+俯,-仰):{eye_alpha} 度')
+        print(f'眼睛内外旋角(+外旋,-内旋):{eye_beta} 度')
+        print('\n')
+
+        if len(head_hits) > 0:
+            print(f'碰撞人头数/总人头数:{max(head_hits)}/{len(obj_list)}')
+            print(f'碰撞几率:{np.around(float(max(head_hits))/53,4)*100}%')
+            print('\n')
+
+            intersection_colors_np = np.array(intersection_colors_list)
+            intersection_colors_np[:, 3] = 0.9
+            intersection_multi_heads = trimesh.PointCloud(vertices=intersection_voxels, colors=list(intersection_colors_np))
+
+            scene_voxel_intersection = trimesh.Scene()
+            scene_voxel_intersection.add_geometry(intersection_multi_heads)
+            scene_voxel_intersection.add_geometry(eye_ball_key_points)
+            scene_voxel_intersection.add_geometry(cone_lens_center)
+
+            path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
+            obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
+
+            for mesh_nr in range(0, len(obj_list)):
+                mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
+                mesh_original.visual.face_colors = [64, 64, 64, 50]
+                scene_voxel_intersection.add_geometry(mesh_original)
+            scene_voxel_intersection.add_geometry(lens_rim)
+            scene_voxel_intersection.add_geometry(cone_lens_key_points)
+            scene_voxel_intersection.add_geometry(marker)
+            scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
+        else:
+            print('NO intersection')
+
+    elif flag == 'n':
+        break
+    else:
+        continue
