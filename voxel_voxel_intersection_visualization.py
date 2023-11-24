@@ -27,6 +27,8 @@ DEPTH_IGNORE = 0.03
 LENS_THICKNESS = 0.01
 LENS_CONE_GAP = 1
 
+VOXEL_TRANSPARENCY = 0.1
+
 eye_ball_shift = [0, 0, -1.30439425e-02] # Pre-calculated by averaging 53 EyeBallCentroid
 lens_half_height_after_cut = 22
 
@@ -62,13 +64,30 @@ norm = mcolors.Normalize(vmin=0, vmax=num_of_heads)
 alpha_value = 1
 scalar_map = plt.cm.ScalarMappable(cmap='Greys', norm=norm)
 
-# Convert each value in the list to a color using the colormap
-colors_list = scalar_map.to_rgba(np.array(accumulation_remove_zero), alpha_value)
-
+# adjust transparency
 colors_np = np.array(colors_list)
-colors_np[:, 3] = 0.1
+colors_np[:, 3] = VOXEL_TRANSPARENCY
 
 multi_heads = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=list(colors_np))
+
+# Convert each value in the list to a color using the colormap
+accumulation_np = np.array(accumulation_remove_zero)
+colors_list = scalar_map.to_rgba(accumulation_np, alpha_value)
+
+common_colors = [
+    [1, 0, 0, 1],    # red
+    [0, 1, 0, 1],    # green
+    [0, 0, 1, 1],    # blue
+    [0, 1, 1, 1],    # cyan
+    [1, 0, 1, 1],    # magenta
+    [1, 1, 0, 1],    # yellow
+    [1, 0.647, 0, 1],  # orange
+    [0.502, 0, 0.502, 1],  # purple
+    [0.647, 0.165, 0.165, 1]  # brown
+]
+
+for i, color in enumerate(common_colors):
+    colors_list[accumulation_np==(i+1)] = color
 
 z_step = round((voxel_center_max[2] - voxel_center_min[2]) / PITCH + 1)
 y_step = round((voxel_center_max[1] - voxel_center_min[1]) / PITCH + 1)
@@ -81,9 +100,6 @@ def voxel2index(v):
 head_voxel_list = voxel_list_remove_zero.tolist()
 head_voxel_indices = list(map(voxel2index, head_voxel_list))
 
-print(accumulation_remove_zero)
-print(len(accumulation_remove_zero))
-print(len(colors_list))
 while True:
     flag = input('输入y继续，输入n退出:') if INTERACTIVE_INPUT else 'y'
     if flag == 'y':
