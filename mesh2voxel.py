@@ -151,8 +151,8 @@ norm = mcolors.Normalize(vmin=0, vmax=num_of_heads)
 alpha_value = 1
 scalar_map = plt.cm.ScalarMappable(cmap='Reds', norm=norm)
 
-# Convert each value in the list to a color using the Reds colormap
-colors_list = [scalar_map.to_rgba(val, alpha_value) for val in accumulation_remove_zero]
+# Convert each value in the list to a color using the colormap
+colors_list = scalar_map.to_rgba(np.array(accumulation_remove_zero), alpha_value)
 
 print('colors')
 print(len(colors_list))

@@ -17,7 +17,7 @@ Head3 = 1203
 MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 CUT_LENS = False
-INTERACTIVE_INPUT = True
+INTERACTIVE_INPUT = False
 SHOW_LIGHT_BLOCK = False
 
 CYLINDER_RADIUS = 0.012
@@ -32,7 +32,7 @@ lens_half_height_after_cut = 22
 
 marker = trimesh.creation.axis(origin_size=0.0004, transform=None, origin_color=None, axis_radius=0.0002, axis_length=0.1)
 
-PITCH = 0.0004
+PITCH = 0.001
 
 #######################  create a cylinder where the light blocks should be ignored  #######################
 cylinder_ignore = trimesh.creation.cylinder(radius=CYLINDER_RADIUS, height=DEPTH_IGNORE)
@@ -51,6 +51,20 @@ accumulation_remove_zero = np.load(f"voxel_results/accumulation_remove_zero_{PIT
 voxel_center_min = np.load(f"voxel_results/voxel_center_min_{PITCH}.npy")
 voxel_center_max = np.load(f"voxel_results/voxel_center_max_{PITCH}.npy")
 
+####################### select Colormap for heat map #######################
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
+# Normalize the values in the list to range between 0 and 1
+norm = mcolors.Normalize(vmin=0, vmax=num_of_heads)
+
+# Create a scalar mappable using the colormap
+alpha_value = 1
+scalar_map = plt.cm.ScalarMappable(cmap='Greys', norm=norm)
+
+# Convert each value in the list to a color using the colormap
+colors_list = scalar_map.to_rgba(np.array(accumulation_remove_zero), alpha_value)
+
 colors_np = np.array(colors_list)
 colors_np[:, 3] = 0.1
 
@@ -59,6 +73,7 @@ multi_heads = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=list(co
 z_step = round((voxel_center_max[2] - voxel_center_min[2]) / PITCH + 1)
 y_step = round((voxel_center_max[1] - voxel_center_min[1]) / PITCH + 1)
 
+
 def voxel2index(v):
     return round((y_step * z_step * (v[0] - voxel_center_min[0]) + z_step * (v[1] - voxel_center_min[1]) + (
                 v[2] - voxel_center_min[2])) / PITCH)
@@ -66,7 +81,9 @@ def voxel2index(v):
 head_voxel_list = voxel_list_remove_zero.tolist()
 head_voxel_indices = list(map(voxel2index, head_voxel_list))
 
-
+print(accumulation_remove_zero)
+print(len(accumulation_remove_zero))
+print(len(colors_list))
 while True:
     flag = input('输入y继续，输入n退出:') if INTERACTIVE_INPUT else 'y'
     if flag == 'y':
