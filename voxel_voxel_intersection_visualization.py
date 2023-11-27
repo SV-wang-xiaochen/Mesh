@@ -2,7 +2,7 @@ import trimesh
 import glob
 import numpy as np
 from utils import xyz_from_alpha_beta, intersection_elements, generate_random_color, rotation_matrix_from_vectors, angle_between_two_vectors, ellipsoid, trimesh2open3d, o3dTriangleMesh2PointCloud, createCircle, saveSceneImage
-
+import math
 
 SHOW_WIREFRAME = False
 ONLY_SHOW_INTERSECTION = False
@@ -18,7 +18,7 @@ MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 CUT_LENS = False
 INTERACTIVE_INPUT = False
-SHOW_LIGHT_BLOCK = False
+SHOW_LIGHT_BLOCK = True
 
 CYLINDER_RADIUS = 0.012
 CYLINDER_Y_SHIFT = -0.003
@@ -108,13 +108,17 @@ while True:
         working_distance = float(input('工作距离[0,45]mm:')) if INTERACTIVE_INPUT else 10
         lens_diameter = float(input('镜片直径[20,80]mm:')) if INTERACTIVE_INPUT else 58
 
+        # Define the light cone
+        cone_diameter = float(input('出光直径[20,80]mm:')) if INTERACTIVE_INPUT else 43
+        cone_angle = float(input('出光角度[80,120]度:')) if INTERACTIVE_INPUT else 110
+
         # Define the lens rotation
-        lens_alpha = float(input('镜片俯仰角[-90,90]度(+仰,-俯):')) if INTERACTIVE_INPUT else 0
-        lens_beta = float(input('镜片内外旋角[-90,90]度(+内旋,-外旋):')) if INTERACTIVE_INPUT else 0
+        lens_alpha = float(input('镜片俯仰角[-90,90]度(+仰,-俯):')) if INTERACTIVE_INPUT else 12
+        lens_beta = float(input('镜片内外旋角[-90,90]度(+内旋,-外旋):')) if INTERACTIVE_INPUT else 25
 
         # Define the eye rotation
-        eye_alpha = float(input('眼睛俯仰角[-90,90]度(+俯,-仰):')) if INTERACTIVE_INPUT else 0
-        eye_beta = float(input('眼睛内外旋角[-90,90]度(+外旋,-内旋):')) if INTERACTIVE_INPUT else 0
+        eye_alpha = float(input('眼睛俯仰角[-90,90]度(+俯,-仰):')) if INTERACTIVE_INPUT else 12
+        eye_beta = float(input('眼睛内外旋角[-90,90]度(+外旋,-内旋):')) if INTERACTIVE_INPUT else 10
 
         print('\n')
 
@@ -129,9 +133,10 @@ while True:
         scene.add_geometry(eye_ball_key_points)
 
         # #######################  create light cone and lens #######################
-        lens_cone_radius = lens_diameter/2000*0.5
-        lens_cone = trimesh.creation.cone(lens_cone_radius, -(working_distance-LENS_CONE_GAP)/1000)
-        lens_cone.apply_translation([0, 0, working_distance/1000-eye_ball_shift[2]-LENS_CONE_GAP/1000])
+        light_cone_radius = cone_diameter / 2000
+        light_cone_height = light_cone_radius / math.tan(cone_angle / 2 / 180*np.pi)
+        light_cone = trimesh.creation.cone(light_cone_radius, -light_cone_height)
+        light_cone.apply_translation([0, 0, working_distance / 1000 - eye_ball_shift[2]])
 
         lens = trimesh.creation.cylinder(lens_diameter/2000, LENS_THICKNESS/1000)
         lens.apply_translation([0, 0, working_distance/1000-eye_ball_shift[2]])
@@ -141,6 +146,10 @@ while True:
         lens_cone_key_points = trimesh.points.PointCloud(vertices=[lens_cone_top, lens_center], colors=(255, 255, 0))
         lens_cone_top_point = trimesh.points.PointCloud(vertices=[lens_cone_top], colors=(255, 255, 0))
 
+        light_cone_center = [0, 0, working_distance/1000-eye_ball_shift[2]]
+        light_cone_top = [0, 0, working_distance/1000-eye_ball_shift[2]-light_cone_height]
+        light_cone_key_points = trimesh.points.PointCloud(vertices=[light_cone_top, light_cone_center], colors=(255, 0, 0))
+
         x,y,z = xyz_from_alpha_beta(lens_alpha, lens_beta)
 
         # Calculate the rotation matrix between initial direction vector [0,0,1) and (x,y,z)
@@ -149,9 +158,10 @@ while True:
         Rotation_front[:3, :3] = R
 
         # Rotate the lens
-        lens_cone.apply_transform(Rotation_front)
+        light_cone.apply_transform(Rotation_front)
         lens.apply_transform(Rotation_front)
         lens_cone_key_points.apply_transform(Rotation_front)
+        light_cone_key_points.apply_transform(Rotation_front)
 
         # Translate the lens to final position
         x_side,y_side,z_side = xyz_from_alpha_beta(eye_alpha, eye_beta)
@@ -162,7 +172,8 @@ while True:
 
         lens_cone_top_point.apply_transform(Rotation_side)
 
-        lens_cone.apply_translation(lens_cone_top_point.vertices[0]-lens_cone_key_points.vertices[0])
+        light_cone.apply_translation(lens_cone_top_point.vertices[0]-lens_cone_key_points.vertices[0])
+        light_cone_key_points.apply_translation(lens_cone_top_point.vertices[0] - lens_cone_key_points.vertices[0])
         lens.apply_translation(lens_cone_top_point.vertices[0] - lens_cone_key_points.vertices[0])
 
         #######################  create a circle to show the rim the lens  #######################
@@ -173,11 +184,12 @@ while True:
 
         lens_cone_key_points.apply_translation(lens_cone_top_point.vertices[0]-lens_cone_key_points.vertices[0])
 
-        lens_cone.visual.face_colors = [0, 64, 64, 100]
+        light_cone.visual.face_colors = [0, 64, 64, 100]
         lens.visual.face_colors = [64, 64, 64, 100]
 
         if SHOW_LIGHT_BLOCK:
-            scene.add_geometry(lens_cone)
+            scene.add_geometry(light_cone)
+            scene.add_geometry(light_cone_key_points)
 
         scene.add_geometry(lens)
         scene.add_geometry(lens_cone_key_points)
@@ -214,11 +226,11 @@ while True:
 
         scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
-        # #######################  Show Overlapping Voxelization  #######################
-        # if SHOW_LIGHT_BLOCK:
-        #     voxelized_light_cone = light_cone.voxelized(PITCH).fill()
-        #     light_cone_voxelization = np.around(np.array(voxelized_light_cone.points),4)
-        #     light_cone_pcl = trimesh.PointCloud(vertices=np.array(light_cone_voxelization), colors=[0, 255, 0, 100])
+        #######################  Show Overlapping Voxelization  #######################
+        if SHOW_LIGHT_BLOCK:
+            voxelized_light_cone = light_cone.voxelized(PITCH).fill()
+            light_cone_voxelization = np.around(np.array(voxelized_light_cone.points),4)
+            light_cone_pcl = trimesh.PointCloud(vertices=np.array(light_cone_voxelization), colors=[0, 255, 0, 100])
 
             # scene.add_geometry(light_cone_pcl)
 
@@ -237,31 +249,31 @@ while True:
         scene_voxel_lens.add_geometry(marker)
         scene_voxel_lens.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':5})
 
-        # if SHOW_LIGHT_BLOCK:
-        #     scene_voxel_light_cone = trimesh.Scene()
-        #     scene_voxel_light_cone.add_geometry(eye_ball_key_points)
-        #     scene_voxel_light_cone.add_geometry(light_cone_pcl)
-        #     scene_voxel_light_cone.add_geometry(multi_heads)
-        #
-        #     scene_voxel_light_cone.add_geometry(marker)
-        #     scene_voxel_light_cone.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':5})
+        if SHOW_LIGHT_BLOCK:
+            scene_voxel_light_cone = trimesh.Scene()
+            scene_voxel_light_cone.add_geometry(eye_ball_key_points)
+            scene_voxel_light_cone.add_geometry(light_cone_pcl)
+            scene_voxel_light_cone.add_geometry(multi_heads)
+
+            scene_voxel_light_cone.add_geometry(marker)
+            scene_voxel_light_cone.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':5})
 
         #######################  Show Intersection Heat Map  #######################
 
-        # if SHOW_LIGHT_BLOCK:
-        #     # calculate light blocks
-        #     light_cone_list = light_cone_voxelization.tolist()
-        #     light_cone_indices = list(map(voxel2index, light_cone_list))
-        #
-        #     cylinder_list = cylinder_voxelization.tolist()
-        #     cylinder_voxel_indices = list(map(voxel2index, cylinder_list))
-        #
-        #     valid_light_cone_indices = list(np.setdiff1d(np.array(light_cone_indices), np.array(cylinder_voxel_indices), True))
-        #     _, light_block_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(valid_light_cone_indices), return_indices=True)
-        #
-        #     block_voxels = voxel_list_remove_zero[light_block_indices]
-        #     block_colors_list = colors_list[light_block_indices]
-        #     blocks = accumulation_remove_zero[light_block_indices]
+        if SHOW_LIGHT_BLOCK:
+            # calculate light blocks
+            light_cone_list = light_cone_voxelization.tolist()
+            light_cone_indices = list(map(voxel2index, light_cone_list))
+
+            cylinder_list = cylinder_voxelization.tolist()
+            cylinder_voxel_indices = list(map(voxel2index, cylinder_list))
+
+            valid_light_cone_indices = list(np.setdiff1d(np.array(light_cone_indices), np.array(cylinder_voxel_indices), True))
+            _, light_block_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(valid_light_cone_indices), return_indices=True)
+
+            block_voxels = voxel_list_remove_zero[light_block_indices]
+            block_colors_list = colors_list[light_block_indices]
+            blocks = accumulation_remove_zero[light_block_indices]
 
         # calculate lens hits
         lens_list = lens_voxelization.tolist()
@@ -309,33 +321,33 @@ while True:
         else:
             print('无碰撞')
 
-        # if SHOW_LIGHT_BLOCK:
-        #     if len(blocks)>0:
-        #         print(f'光路遮挡人头数/总人头数:{max(blocks)}/{len(obj_list)}')
-        #         print(f'光路遮挡几率:{np.around(float(max(blocks))/53,4)*100}%')
-        #         print('\n')
-        #
-        #         intersection_multi_heads = trimesh.PointCloud(vertices=block_voxels, colors=block_colors_list)
-        #
-        #         scene_voxel_intersection = trimesh.Scene()
-        #         scene_voxel_intersection.add_geometry(intersection_multi_heads)
-        #         scene_voxel_intersection.add_geometry(eye_ball_key_points)
-        #         scene_voxel_intersection.add_geometry(lens_center)
-        #
-        #         path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
-        #         obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
-        #
-        #         for mesh_nr in range(0, len(obj_list)):
-        #             mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-        #             mesh_original.visual.face_colors = [64, 64, 64, 100]
-        #             scene_voxel_intersection.add_geometry(mesh_original)
-        #         scene_voxel_intersection.add_geometry(lens_rim)
-        #         scene_voxel_intersection.add_geometry(lens_cone_key_points)
-        #         scene_voxel_intersection.add_geometry(marker)
-        #         # saveSceneImage(scene_voxel_intersection, '3.png')
-        #         scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':10})
-        #     else:
-        #         print('无遮挡')
+        if SHOW_LIGHT_BLOCK:
+            if len(blocks)>0:
+                print(f'光路遮挡人头数/总人头数:{max(blocks)}/{len(obj_list)}')
+                print(f'光路遮挡几率:{np.around(float(max(blocks))/53,4)*100}%')
+                print('\n')
+
+                intersection_multi_heads = trimesh.PointCloud(vertices=block_voxels, colors=block_colors_list)
+
+                scene_voxel_intersection = trimesh.Scene()
+                scene_voxel_intersection.add_geometry(intersection_multi_heads)
+                scene_voxel_intersection.add_geometry(eye_ball_key_points)
+                scene_voxel_intersection.add_geometry(lens_center)
+
+                path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
+                obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
+
+                for mesh_nr in range(0, len(obj_list)):
+                    mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
+                    mesh_original.visual.face_colors = [64, 64, 64, 100]
+                    scene_voxel_intersection.add_geometry(mesh_original)
+                scene_voxel_intersection.add_geometry(lens_rim)
+                scene_voxel_intersection.add_geometry(light_cone_key_points)
+                scene_voxel_intersection.add_geometry(marker)
+                # saveSceneImage(scene_voxel_intersection, '3.png')
+                scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':10})
+            else:
+                print('无遮挡')
 
     elif flag == 'n':
         break
