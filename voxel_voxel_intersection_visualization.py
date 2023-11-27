@@ -25,7 +25,6 @@ CYLINDER_Y_SHIFT = -0.003
 DEPTH_IGNORE = 0.03
 
 LENS_THICKNESS = 0.01
-LENS_CONE_GAP = 1
 
 VOXEL_TRANSPARENCY = 0.1
 
@@ -34,7 +33,7 @@ lens_half_height_after_cut = 22
 
 marker = trimesh.creation.axis(origin_size=0.0004, transform=None, origin_color=None, axis_radius=0.0002, axis_length=0.1)
 
-PITCH = 0.001
+PITCH = 0.0004
 
 #######################  create a cylinder where the light blocks should be ignored  #######################
 cylinder_ignore = trimesh.creation.cylinder(radius=CYLINDER_RADIUS, height=DEPTH_IGNORE)
@@ -76,12 +75,12 @@ colors_list = scalar_map.to_rgba(accumulation_np, alpha_value)
 
 common_colors = [
     [1, 0, 0, 1],    # red
-    [0, 1, 0, 1],    # green
-    [0, 0, 1, 1],    # blue
-    [0, 1, 1, 1],    # cyan
-    [1, 0, 1, 1],    # magenta
-    [1, 1, 0, 1],    # yellow
+    [1, 0, 1, 1],  # magenta
     [1, 0.647, 0, 1],  # orange
+    [1, 1, 0, 1],    # yellow
+    [0, 1, 0, 1],    # green
+    [0, 1, 1, 1],  # cyan
+    [0, 0, 1, 1],    # blue
     [0.502, 0, 0.502, 1],  # purple
     [0.647, 0.165, 0.165, 1]  # brown
 ]
@@ -110,7 +109,7 @@ while True:
 
         # Define the light cone
         cone_diameter = float(input('出光直径[20,80]mm:')) if INTERACTIVE_INPUT else 43
-        cone_angle = float(input('出光角度[80,120]度:')) if INTERACTIVE_INPUT else 110
+        cone_angle = float(input('出光角度[70,140]度:')) if INTERACTIVE_INPUT else 110
 
         # Define the lens rotation
         lens_alpha = float(input('镜片俯仰角[-90,90]度(+仰,-俯):')) if INTERACTIVE_INPUT else 12
