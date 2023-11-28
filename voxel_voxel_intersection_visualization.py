@@ -20,7 +20,7 @@ CUT_LENS = False
 INTERACTIVE_INPUT = False
 SHOW_LIGHT_BLOCK = True
 
-CYLINDER_RADIUS = 0.012
+CYLINDER_RADIUS = 0.015
 CYLINDER_Y_SHIFT = -0.003
 DEPTH_IGNORE = 0.03
 
@@ -74,19 +74,21 @@ accumulation_np = np.array(accumulation_remove_zero)
 colors_list = scalar_map.to_rgba(accumulation_np, alpha_value)
 
 common_colors = [
-    [1, 0, 0, 1],    # red
-    [1, 0, 1, 1],  # magenta
-    [1, 0.647, 0, 1],  # orange
-    [1, 1, 0, 1],    # yellow
-    [0, 1, 0, 1],    # green
-    [0, 1, 1, 1],  # cyan
-    [0, 0, 1, 1],    # blue
-    [0.502, 0, 0.502, 1],  # purple
-    [0.647, 0.165, 0.165, 1]  # brown
+    [0.745, 0.788, 0.886, 1],
+    [0.353, 0.702, 0.863, 1],
+    [0.141, 0.906, 0.22, 1],
+    [1, 0.8, 0, 1],
+    [0.91, 0.039, 0.039, 1],
+    [0.682, 0.137, 0.137, 1],
+    [0.427, 0.102, 0.102, 1],
+    [0.322, 0.047, 0.047, 1],
+    [0.165, 0, 0, 1],
+    [0, 0, 0, 1]
 ]
 
 for i, color in enumerate(common_colors):
     colors_list[accumulation_np==(i+1)] = color
+colors_list[accumulation_np>10] = [0, 0, 0, 1]
 
 z_step = round((voxel_center_max[2] - voxel_center_min[2]) / PITCH + 1)
 y_step = round((voxel_center_max[1] - voxel_center_min[1]) / PITCH + 1)
@@ -112,12 +114,12 @@ while True:
         cone_angle = float(input('出光角度[70,140]度:')) if INTERACTIVE_INPUT else 110
 
         # Define the lens rotation
-        lens_alpha = float(input('镜片俯仰角[-90,90]度(+仰,-俯):')) if INTERACTIVE_INPUT else 12
-        lens_beta = float(input('镜片内外旋角[-90,90]度(+内旋,-外旋):')) if INTERACTIVE_INPUT else 25
+        lens_alpha = float(input('镜片俯仰角[-90,90]度(+仰,-俯):')) if INTERACTIVE_INPUT else 0
+        lens_beta = float(input('镜片内外旋角[-90,90]度(+内旋,-外旋):')) if INTERACTIVE_INPUT else 0
 
         # Define the eye rotation
-        eye_alpha = float(input('眼睛俯仰角[-90,90]度(+俯,-仰):')) if INTERACTIVE_INPUT else 12
-        eye_beta = float(input('眼睛内外旋角[-90,90]度(+外旋,-内旋):')) if INTERACTIVE_INPUT else 10
+        eye_alpha = float(input('眼睛俯仰角[-90,90]度(+俯,-仰):')) if INTERACTIVE_INPUT else 0
+        eye_beta = float(input('眼睛内外旋角[-90,90]度(+外旋,-内旋):')) if INTERACTIVE_INPUT else 0
 
         print('\n')
 
