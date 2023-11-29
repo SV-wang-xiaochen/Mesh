@@ -35,14 +35,14 @@ marker = trimesh.creation.axis(origin_size=0.0004, transform=None, origin_color=
 
 PITCH = 0.0004
 
-#######################  create a cylinder where the light blocks should be ignored  #######################
-cylinder_ignore = trimesh.creation.cylinder(radius=CYLINDER_RADIUS, height=DEPTH_IGNORE)
-cylinder_ignore.apply_translation([0, CYLINDER_Y_SHIFT, DEPTH_IGNORE / 2])
-# scene.add_geometry(cylinder_ignore)
+#######################  load a predefined elliptical cylinder where the light blocks should be ignored  #######################
+elliptical_cylinder_path = f'voxel_results/EllipticalCylinder.obj'
+elliptical_cylinder = trimesh.load_mesh(elliptical_cylinder_path)
+elliptical_cylinder.apply_scale(0.001)
 
-voxelized_cylinder = cylinder_ignore.voxelized(PITCH).fill()
-cylinder_voxelization = np.around(np.array(voxelized_cylinder.points), 4)
-cylinder_pcl = trimesh.PointCloud(vertices=np.array(cylinder_voxelization), colors=[255, 0, 255, 100])
+voxelized_elliptical_cylinder = elliptical_cylinder.voxelized(PITCH).fill()
+elliptical_cylinder_voxelization = np.around(np.array(voxelized_elliptical_cylinder.points), 4)
+elliptical_cylinder_pcl = trimesh.PointCloud(vertices=np.array(elliptical_cylinder_voxelization), colors=[255, 0, 255, 100])
 
 # load prepared voxel
 num_of_heads = np.load(f"voxel_results/num_of_heads_{PITCH}.npy")
@@ -266,10 +266,10 @@ while True:
             light_cone_list = light_cone_voxelization.tolist()
             light_cone_indices = list(map(voxel2index, light_cone_list))
 
-            cylinder_list = cylinder_voxelization.tolist()
-            cylinder_voxel_indices = list(map(voxel2index, cylinder_list))
+            elliptical_cylinder_list = elliptical_cylinder_voxelization.tolist()
+            elliptical_cylinder_voxel_indices = list(map(voxel2index, elliptical_cylinder_list))
 
-            valid_light_cone_indices = list(np.setdiff1d(np.array(light_cone_indices), np.array(cylinder_voxel_indices), True))
+            valid_light_cone_indices = list(np.setdiff1d(np.array(light_cone_indices), np.array(elliptical_cylinder_voxel_indices), True))
             _, light_block_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(valid_light_cone_indices), return_indices=True)
 
             block_voxels = voxel_list_remove_zero[light_block_indices]
