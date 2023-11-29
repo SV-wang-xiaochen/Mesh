@@ -307,7 +307,7 @@ while True:
             scene_voxel_intersection.add_geometry(eye_ball_key_points)
             scene_voxel_intersection.add_geometry(lens_center)
 
-            path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
+            path = f'voxel_results/FLORENCE'
             obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 
             for mesh_nr in range(0, len(obj_list)):
@@ -335,7 +335,7 @@ while True:
                 scene_voxel_intersection.add_geometry(eye_ball_key_points)
                 scene_voxel_intersection.add_geometry(lens_center)
 
-                path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
+                path = f'voxel_results/FLORENCE'
                 obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 
                 for mesh_nr in range(0, len(obj_list)):
