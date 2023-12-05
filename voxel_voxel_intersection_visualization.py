@@ -33,7 +33,7 @@ lens_half_height_after_cut = 22
 
 marker = trimesh.creation.axis(origin_size=0.0004, transform=None, origin_color=None, axis_radius=0.0002, axis_length=0.1)
 
-PITCH = 0.0004
+PITCH = 0.001
 
 #######################  load a predefined elliptical cylinder where the light blocks should be ignored  #######################
 elliptical_cylinder_path = f'voxel_results/EllipticalCylinder.obj'
@@ -106,20 +106,20 @@ while True:
     if flag == 'y':
         # PITCH_TEMP = float(input('Size of voxel. Only [0.4, 0.5, 1] mm allowed. The smaller, the more accurate:')) if INTERACTIVE_INPUT else 0.4
 
-        working_distance = float(input('工作距离[0,45]mm:')) if INTERACTIVE_INPUT else 10
-        lens_diameter = float(input('镜片直径[20,80]mm:')) if INTERACTIVE_INPUT else 58
+        working_distance = float(input('工作距离(周边)[0,45]mm:')) if INTERACTIVE_INPUT else 10
+        lens_diameter = float(input('目镜外框直径[20,80]mm:')) if INTERACTIVE_INPUT else 58
 
         # Define the light cone
-        cone_diameter = float(input('出光直径[20,80]mm:')) if INTERACTIVE_INPUT else 43
-        cone_angle = float(input('出光角度[70,140]度:')) if INTERACTIVE_INPUT else 110
+        cone_diameter = float(input('通光孔径[20,80]mm:')) if INTERACTIVE_INPUT else 43
+        cone_angle = float(input('单张范围（眼外角）[70,140]度:')) if INTERACTIVE_INPUT else 110
 
         # Define the lens rotation
-        lens_alpha = float(input('镜片俯仰角[-90,90]度(+仰,-俯):')) if INTERACTIVE_INPUT else 0
-        lens_beta = float(input('镜片内外旋角[-90,90]度(+内旋,-外旋):')) if INTERACTIVE_INPUT else 0
+        lens_alpha = float(input('机器俯仰角[-90,90]度(+仰,-俯):')) if INTERACTIVE_INPUT else 12
+        lens_beta = float(input('机器内外旋角[-90,90]度(+内旋,-外旋):')) if INTERACTIVE_INPUT else 25
 
         # Define the eye rotation
-        eye_alpha = float(input('眼睛俯仰角[-90,90]度(+俯,-仰):')) if INTERACTIVE_INPUT else 0
-        eye_beta = float(input('眼睛内外旋角[-90,90]度(+外旋,-内旋):')) if INTERACTIVE_INPUT else 0
+        eye_alpha = float(input('眼睛俯仰角[-30,45]度(+俯,-仰):')) if INTERACTIVE_INPUT else 12
+        eye_beta = float(input('眼睛内外旋角[-45,45]度(+外旋,-内旋):')) if INTERACTIVE_INPUT else 10
 
         print('\n')
 
@@ -286,13 +286,16 @@ while True:
         hit_colors_list = colors_list[hit_indices]
         hits = accumulation_remove_zero[hit_indices]
 
-        print(f'Voxel尺寸:{PITCH*1000} mm')
-        print(f'工作距离:{working_distance} mm')
-        print(f'镜片直径:{lens_diameter} mm')
-        print(f'镜片俯仰角(+仰,-俯):{lens_alpha} 度')
-        print(f'镜片内外旋角(+内旋,-外旋):{lens_beta} 度')
+        print(f'工作距离（周边）:{working_distance} mm')
+        print(f'目镜外框直径:{lens_diameter} mm')
+        print(f'通光孔径:{cone_diameter} mm')
+        print(f'单张范围（眼外角）:{cone_angle} mm')
+        print(f'机器俯仰角(+仰,-俯):{lens_alpha} 度')
+        print(f'机器内外旋角(+内旋,-外旋):{lens_beta} 度')
         print(f'眼睛俯仰角(+俯,-仰):{eye_alpha} 度')
         print(f'眼睛内外旋角(+外旋,-内旋):{eye_beta} 度')
+        print(f'俯仰眼位 夹角:{eye_alpha-lens_alpha} 度')
+        print(f'鼻颞眼位 夹角:{eye_beta-lens_beta} 度')
         print('\n')
 
         if len(hits)>0:
