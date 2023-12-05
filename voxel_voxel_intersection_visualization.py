@@ -1,8 +1,10 @@
 import trimesh
 import glob
 import numpy as np
-from utils import xyz_from_alpha_beta, intersection_elements, generate_random_color, rotation_matrix_from_vectors, angle_between_two_vectors, ellipsoid, trimesh2open3d, o3dTriangleMesh2PointCloud, createCircle, saveSceneImage
+from utils import xyz_from_alpha_beta, intersection_elements, generate_random_color, rotation_matrix_from_vectors, angle_between_two_vectors, ellipsoid, trimesh2open3d, o3dTriangleMesh2PointCloud, createCircle, saveSceneImage, paraSweepTable
 import math
+import xlsxwriter
+
 
 SHOW_WIREFRAME = False
 ONLY_SHOW_INTERSECTION = False
@@ -33,7 +35,7 @@ lens_half_height_after_cut = 22
 
 marker = trimesh.creation.axis(origin_size=0.0004, transform=None, origin_color=None, axis_radius=0.0002, axis_length=0.1)
 
-PITCH = 0.001
+PITCH = 0.0004
 
 #######################  load a predefined elliptical cylinder where the light blocks should be ignored  #######################
 elliptical_cylinder_path = f'voxel_results/EllipticalCylinder.obj'
@@ -101,37 +103,52 @@ def voxel2index(v):
 head_voxel_list = voxel_list_remove_zero.tolist()
 head_voxel_indices = list(map(voxel2index, head_voxel_list))
 
-while True:
-    flag = input('输入y继续，输入n退出:') if INTERACTIVE_INPUT else 'y'
-    if flag == 'y':
-        # PITCH_TEMP = float(input('Size of voxel. Only [0.4, 0.5, 1] mm allowed. The smaller, the more accurate:')) if INTERACTIVE_INPUT else 0.4
 
-        working_distance = float(input('工作距离(周边)[0,45]mm:')) if INTERACTIVE_INPUT else 10
-        lens_diameter = float(input('目镜外框直径[20,80]mm:')) if INTERACTIVE_INPUT else 58
+# PITCH_TEMP = float(input('Size of voxel. Only [0.4, 0.5, 1] mm allowed. The smaller, the more accurate:')) if INTERACTIVE_INPUT else 0.4
 
-        # Define the light cone
-        cone_diameter = float(input('通光孔径[20,80]mm:')) if INTERACTIVE_INPUT else 43
-        cone_angle = float(input('单张范围（眼外角）[70,140]度:')) if INTERACTIVE_INPUT else 110
+working_distance = float(input('工作距离(周边)[0,45]mm:')) if INTERACTIVE_INPUT else 10
+lens_diameter = float(input('目镜外框直径[20,80]mm:')) if INTERACTIVE_INPUT else 58
 
-        # Define the lens rotation
-        lens_alpha = float(input('机器俯仰角[-90,90]度(+仰,-俯):')) if INTERACTIVE_INPUT else 12
-        lens_beta = float(input('机器内外旋角[-90,90]度(+内旋,-外旋):')) if INTERACTIVE_INPUT else 25
+# Define the light cone
+cone_diameter = float(input('通光孔径[20,80]mm:')) if INTERACTIVE_INPUT else 43
+cone_angle = float(input('单张范围（眼外角）[70,140]度:')) if INTERACTIVE_INPUT else 110
 
-        # Define the eye rotation
-        eye_alpha = float(input('眼睛俯仰角[-30,45]度(+俯,-仰):')) if INTERACTIVE_INPUT else 12
-        eye_beta = float(input('眼睛内外旋角[-45,45]度(+外旋,-内旋):')) if INTERACTIVE_INPUT else 10
+# Define the lens rotation
+lens_alpha_min = int(input('机器俯仰角 最小值(+仰,-俯):')) if INTERACTIVE_INPUT else 0
+lens_alpha_range = int(input('机器俯仰角 区间长度:')) if INTERACTIVE_INPUT else 10
+lens_alpha_stride = int(input('机器俯仰角 步进角度:')) if INTERACTIVE_INPUT else 10
+
+lens_beta_min = int(input('机器内外旋角 最小值(+内旋,-外旋):')) if INTERACTIVE_INPUT else 0
+lens_beta_range = int(input('机器内外旋角 区间长度:')) if INTERACTIVE_INPUT else 10
+lens_beta_stride = int(input('机器内外旋角 步进角度:')) if INTERACTIVE_INPUT else 10
+
+# Define the side rotation
+side_alpha = int(input('俯仰眼位 夹角[-30,+30]度:')) if INTERACTIVE_INPUT else 0
+side_beta = int(input('鼻颞眼位 夹角[-30,+30]度:')) if INTERACTIVE_INPUT else -15
+
+hit_table = []
+block_table = []
+
+for lens_alpha in range(lens_alpha_min, lens_alpha_min + lens_alpha_range+1, lens_alpha_stride):
+    hit_row_beta = []
+    block_row_beta = []
+    for lens_beta in range(lens_beta_min, lens_beta_min + lens_beta_range+1, lens_beta_stride):
+
+        # Calculate the eye rotation
+        eye_alpha = lens_alpha+side_alpha
+        eye_beta = lens_beta+side_beta
 
         print('\n')
 
         path = './voxel_results/FLORENCE'
         obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 
-        scene = trimesh.Scene()
+        # scene = trimesh.Scene()
 
         # plot the LeftEyeFront/centroid point
         eye_ball_key_points = trimesh.points.PointCloud(vertices=[[0, 0, -eye_ball_shift[2]],[0,0,0]], colors=(0, 255, 0))
 
-        scene.add_geometry(eye_ball_key_points)
+        # scene.add_geometry(eye_ball_key_points)
 
         # #######################  create light cone and lens #######################
         light_cone_radius = cone_diameter / 2000
@@ -181,19 +198,19 @@ while True:
         lens_rim = createCircle([0, 0, working_distance/1000-eye_ball_shift[2]], lens_diameter/2000)
         lens_rim.apply_transform(Rotation_front)
         lens_rim.apply_translation(lens_cone_top_point.vertices[0]-lens_cone_key_points.vertices[0])
-        scene.add_geometry(lens_rim)
+        # scene.add_geometry(lens_rim)
 
         lens_cone_key_points.apply_translation(lens_cone_top_point.vertices[0]-lens_cone_key_points.vertices[0])
 
         light_cone.visual.face_colors = [0, 64, 64, 100]
         lens.visual.face_colors = [64, 64, 64, 100]
 
-        if SHOW_LIGHT_BLOCK:
-            scene.add_geometry(light_cone)
-            scene.add_geometry(light_cone_key_points)
-
-        scene.add_geometry(lens)
-        scene.add_geometry(lens_cone_key_points)
+        # if SHOW_LIGHT_BLOCK:
+        #     scene.add_geometry(light_cone)
+        #     scene.add_geometry(light_cone_key_points)
+        #
+        # scene.add_geometry(lens)
+        # scene.add_geometry(lens_cone_key_points)
 
         # ####################### Debug Only: Create 3d sphere, which is the region where centroid of the lens could be located #######################
         # sphere_radius = working_distance/1000-eye_ball_shift[2]
@@ -210,22 +227,22 @@ while True:
         #
         # # scene.add_geometry(sphere_mesh)
 
-        for mesh_nr in range(0, len(obj_list)):
-            mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-            mesh_original.visual.face_colors = generate_random_color()
-            scene.add_geometry(mesh_original)
-
-        # Visualize the trimesh
-        scene.add_geometry(marker)
-        # saveSceneImage(scene, '1.png')
-
-        # Access the camera in the scene
-        camera = scene.camera
-
-        # # set camera orientation
-        # scene.set_camera((90 / 180 * np.pi, 90 / 180 * np.pi, 0 / 180 * np.pi))
-
-        scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
+        # for mesh_nr in range(0, len(obj_list)):
+        #     mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
+        #     mesh_original.visual.face_colors = generate_random_color()
+        #     scene.add_geometry(mesh_original)
+        #
+        # # Visualize the trimesh
+        # scene.add_geometry(marker)
+        # # saveSceneImage(scene, '1.png')
+        #
+        # # Access the camera in the scene
+        # camera = scene.camera
+        #
+        # # # set camera orientation
+        # # scene.set_camera((90 / 180 * np.pi, 90 / 180 * np.pi, 0 / 180 * np.pi))
+        #
+        # scene.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME})
 
         #######################  Show Overlapping Voxelization  #######################
         if SHOW_LIGHT_BLOCK:
@@ -241,23 +258,23 @@ while True:
 
         # scene.add_geometry(lens_pcl)
 
-        # show voxel of multi heads and lens
-        scene_voxel_lens = trimesh.Scene()
-        scene_voxel_lens.add_geometry(eye_ball_key_points)
-        scene_voxel_lens.add_geometry(lens_pcl)
-        scene_voxel_lens.add_geometry(multi_heads)
+        # # show voxel of multi heads and lens
+        # scene_voxel_lens = trimesh.Scene()
+        # scene_voxel_lens.add_geometry(eye_ball_key_points)
+        # scene_voxel_lens.add_geometry(lens_pcl)
+        # scene_voxel_lens.add_geometry(multi_heads)
+        #
+        # scene_voxel_lens.add_geometry(marker)
+        # scene_voxel_lens.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':5})
 
-        scene_voxel_lens.add_geometry(marker)
-        scene_voxel_lens.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':5})
-
-        if SHOW_LIGHT_BLOCK:
-            scene_voxel_light_cone = trimesh.Scene()
-            scene_voxel_light_cone.add_geometry(eye_ball_key_points)
-            scene_voxel_light_cone.add_geometry(light_cone_pcl)
-            scene_voxel_light_cone.add_geometry(multi_heads)
-
-            scene_voxel_light_cone.add_geometry(marker)
-            scene_voxel_light_cone.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':5})
+        # if SHOW_LIGHT_BLOCK:
+        #     scene_voxel_light_cone = trimesh.Scene()
+        #     scene_voxel_light_cone.add_geometry(eye_ball_key_points)
+        #     scene_voxel_light_cone.add_geometry(light_cone_pcl)
+        #     scene_voxel_light_cone.add_geometry(multi_heads)
+        #
+        #     scene_voxel_light_cone.add_geometry(marker)
+            # scene_voxel_light_cone.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':5})
 
         #######################  Show Intersection Heat Map  #######################
 
@@ -292,68 +309,92 @@ while True:
         print(f'单张范围（眼外角）:{cone_angle} mm')
         print(f'机器俯仰角(+仰,-俯):{lens_alpha} 度')
         print(f'机器内外旋角(+内旋,-外旋):{lens_beta} 度')
+        print(f'俯仰眼位 夹角:{side_alpha} 度')
+        print(f'鼻颞眼位 夹角:{side_beta} 度')
         print(f'眼睛俯仰角(+俯,-仰):{eye_alpha} 度')
         print(f'眼睛内外旋角(+外旋,-内旋):{eye_beta} 度')
-        print(f'俯仰眼位 夹角:{eye_alpha-lens_alpha} 度')
-        print(f'鼻颞眼位 夹角:{eye_beta-lens_beta} 度')
+
         print('\n')
 
-        if len(hits)>0:
-            print(f'镜片碰撞人头数/总人头数:{max(hits)}/{len(obj_list)}')
-            print(f'镜片碰撞几率:{np.around(float(max(hits))/53,4)*100}%')
-            print('\n')
+        # if len(hits)>0:
+        print(f'镜片碰撞人头数/总人头数:{max(hits)}/{len(obj_list)}')
+        print(f'镜片碰撞几率:{np.around(float(max(hits))/53,4)*100}%')
+        print('\n')
 
-            intersection_multi_heads = trimesh.PointCloud(vertices=hit_voxels, colors=hit_colors_list)
-
-            scene_voxel_intersection = trimesh.Scene()
-            scene_voxel_intersection.add_geometry(intersection_multi_heads)
-            scene_voxel_intersection.add_geometry(eye_ball_key_points)
-            scene_voxel_intersection.add_geometry(lens_center)
-
-            path = f'voxel_results/FLORENCE'
-            obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
-
-            for mesh_nr in range(0, len(obj_list)):
-                mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-                mesh_original.visual.face_colors = [64, 64, 64, 100]
-                scene_voxel_intersection.add_geometry(mesh_original)
-            scene_voxel_intersection.add_geometry(lens_rim)
-            scene_voxel_intersection.add_geometry(lens_cone_key_points)
-            scene_voxel_intersection.add_geometry(marker)
+        hit_row_beta.append(f'{np.around(float(max(hits))/53,4)*100}%')
+            # intersection_multi_heads = trimesh.PointCloud(vertices=hit_voxels, colors=hit_colors_list)
+            #
+            # scene_voxel_intersection = trimesh.Scene()
+            # scene_voxel_intersection.add_geometry(intersection_multi_heads)
+            # scene_voxel_intersection.add_geometry(eye_ball_key_points)
+            # scene_voxel_intersection.add_geometry(lens_center)
+            #
+            # path = f'voxel_results/FLORENCE'
+            # obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
+            #
+            # for mesh_nr in range(0, len(obj_list)):
+            #     mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
+            #     mesh_original.visual.face_colors = [64, 64, 64, 100]
+            #     scene_voxel_intersection.add_geometry(mesh_original)
+            # scene_voxel_intersection.add_geometry(lens_rim)
+            # scene_voxel_intersection.add_geometry(lens_cone_key_points)
+            # scene_voxel_intersection.add_geometry(marker)
             # saveSceneImage(scene_voxel_intersection, '3.png')
-            scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':10})
-        else:
-            print('无碰撞')
+            # scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':10})
+        # else:
+        #     print('无碰撞')
 
         if SHOW_LIGHT_BLOCK:
-            if len(blocks)>0:
-                print(f'光路遮挡人头数/总人头数:{max(blocks)}/{len(obj_list)}')
-                print(f'光路遮挡几率:{np.around(float(max(blocks))/53,4)*100}%')
-                print('\n')
+            # if len(blocks)>0:
+            print(f'光路遮挡人头数/总人头数:{max(blocks)}/{len(obj_list)}')
+            print(f'光路遮挡几率:{np.around(float(max(blocks))/53,4)*100}%')
+            print('\n')
 
-                intersection_multi_heads = trimesh.PointCloud(vertices=block_voxels, colors=block_colors_list)
+            block_row_beta.append(f'{np.around(float(max(blocks)) / 53, 4) * 100}%')
 
-                scene_voxel_intersection = trimesh.Scene()
-                scene_voxel_intersection.add_geometry(intersection_multi_heads)
-                scene_voxel_intersection.add_geometry(eye_ball_key_points)
-                scene_voxel_intersection.add_geometry(lens_center)
-
-                path = f'voxel_results/FLORENCE'
-                obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
-
-                for mesh_nr in range(0, len(obj_list)):
-                    mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
-                    mesh_original.visual.face_colors = [64, 64, 64, 100]
-                    scene_voxel_intersection.add_geometry(mesh_original)
-                scene_voxel_intersection.add_geometry(lens_rim)
-                scene_voxel_intersection.add_geometry(light_cone_key_points)
-                scene_voxel_intersection.add_geometry(marker)
+                # intersection_multi_heads = trimesh.PointCloud(vertices=block_voxels, colors=block_colors_list)
+                #
+                # scene_voxel_intersection = trimesh.Scene()
+                # scene_voxel_intersection.add_geometry(intersection_multi_heads)
+                # scene_voxel_intersection.add_geometry(eye_ball_key_points)
+                # scene_voxel_intersection.add_geometry(lens_center)
+                #
+                # path = f'voxel_results/FLORENCE'
+                # obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
+                #
+                # for mesh_nr in range(0, len(obj_list)):
+                #     mesh_original = trimesh.load_mesh(obj_list[mesh_nr])
+                #     mesh_original.visual.face_colors = [64, 64, 64, 100]
+                #     scene_voxel_intersection.add_geometry(mesh_original)
+                # scene_voxel_intersection.add_geometry(lens_rim)
+                # scene_voxel_intersection.add_geometry(light_cone_key_points)
+                # scene_voxel_intersection.add_geometry(marker)
                 # saveSceneImage(scene_voxel_intersection, '3.png')
-                scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':10})
-            else:
-                print('无遮挡')
+                # scene_voxel_intersection.show(smooth=False, flags={'wireframe': SHOW_WIREFRAME}, line_settings={'point_size':10})
+            # else:
+            #     print('无遮挡')
+    hit_table.append(hit_row_beta)
+    block_table.append(block_row_beta)
 
-    elif flag == 'n':
-        break
-    else:
-        continue
+
+alpha_summary = f'机器俯仰角a 范围：[{lens_alpha_min}-{lens_alpha_min + lens_alpha_range}] 度，步进：{lens_alpha_stride} 度'
+beta_summary = f'机器内外旋角b 范围：[{lens_beta_min}-{lens_beta_min + lens_beta_range}] 度，步进：{lens_beta_stride} 度'
+
+summary = [f'工作距离（周边）:{working_distance} mm', f'目镜外框直径:{lens_diameter} mm', f'通光孔径:{cone_diameter} mm',
+           f'单张范围（眼外角）:{cone_angle} mm', alpha_summary, beta_summary, f'俯仰眼位 夹角:{side_alpha} 度', f'鼻颞眼位 夹角:{side_beta} 度']
+
+# Write column and row indices
+column_indices = []
+
+for lens_beta in range(lens_beta_min, lens_beta_min + lens_beta_range+1, lens_beta_stride):
+    column_indices.append(f'b={lens_beta}')
+
+row_indices = []
+
+for lens_alpha in range(lens_alpha_min, lens_alpha_min + lens_alpha_range+1, lens_alpha_stride):
+    row_indices.append(f'a={lens_alpha}')
+
+paraSweepTable(hit_table, './hit.xlsx', summary, column_indices, row_indices)
+paraSweepTable(block_table, './block.xlsx', summary, column_indices, row_indices)
+
+

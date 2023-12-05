@@ -8,6 +8,8 @@ import random
 import math
 import io
 import PIL.Image as Image
+import xlsxwriter
+import os
 
 def xyz_from_alpha_beta(alpha, beta):
     """ Find the destination coordinate of lens (x,y,z) after rotation defined by alpha and beta
@@ -159,3 +161,34 @@ def saveSceneImage(scene, path):
     image = Image.open(io.BytesIO(bytes_))
     image.save(path)
 
+
+def paraSweepTable(result_table, xlsx_path, summary, column_indices, row_indices):
+    # Create a 2D NumPy array
+    array_2d = np.array(result_table)
+
+    # Create a new Excel file and add a worksheet
+    workbook = xlsxwriter.Workbook(xlsx_path)
+    worksheet = workbook.add_worksheet()
+
+    # Write the 2D NumPy array to the worksheet
+    for row_num, row_data in enumerate(array_2d):
+        for col_num, value in enumerate(row_data):
+            worksheet.write(row_num + 1, col_num + 1, value)
+
+    # Write column and row indices
+
+    for col_num, value in enumerate(np.array(column_indices)):
+        worksheet.write(0, col_num + 1, value)
+
+    for row_num, value in enumerate(np.array(row_indices)):
+        worksheet.write(row_num + 1, 0, value)
+
+    summary_start_row = len(row_indices) + 2
+
+    for row_num, item in enumerate(summary):
+        worksheet.write(summary_start_row + row_num, 0, item)
+
+    worksheet.write(0, 0, os.path.basename(xlsx_path).split('.')[0])
+
+    # Close the workbook to save the changes
+    workbook.close()
