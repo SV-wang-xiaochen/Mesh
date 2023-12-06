@@ -114,26 +114,27 @@ cone_diameter = float(input('通光孔径[20,80]mm:')) if INTERACTIVE_INPUT else
 cone_angle = float(input('单张范围（眼外角）[70,140]度:')) if INTERACTIVE_INPUT else 110
 
 # Define the lens rotation
-lens_alpha_min = int(input('机器俯仰角 最小值(+仰,-俯):')) if INTERACTIVE_INPUT else 0
-lens_alpha_range = int(input('机器俯仰角 区间长度:')) if INTERACTIVE_INPUT else 10
-lens_alpha_stride = int(input('机器俯仰角 步进角度:')) if INTERACTIVE_INPUT else 10
+lens_alpha_min = float(input('机器俯仰角 最小值(+仰,-俯):')) if INTERACTIVE_INPUT else 0
+lens_alpha_range = float(input('机器俯仰角 区间长度:')) if INTERACTIVE_INPUT else 10
+lens_alpha_stride = float(input('机器俯仰角 步进角度:')) if INTERACTIVE_INPUT else 10
 
-lens_beta_min = int(input('机器内外旋角 最小值(+内旋,-外旋):')) if INTERACTIVE_INPUT else 0
-lens_beta_range = int(input('机器内外旋角 区间长度:')) if INTERACTIVE_INPUT else 10
-lens_beta_stride = int(input('机器内外旋角 步进角度:')) if INTERACTIVE_INPUT else 10
+lens_beta_min = float(input('机器内外旋角 最小值(+内旋,-外旋):')) if INTERACTIVE_INPUT else 0
+lens_beta_range = float(input('机器内外旋角 区间长度:')) if INTERACTIVE_INPUT else 10
+lens_beta_stride = float(input('机器内外旋角 步进角度:')) if INTERACTIVE_INPUT else 10
 
 # Define the side rotation
-side_alpha = int(input('俯仰眼位 夹角[-30,+30]度:')) if INTERACTIVE_INPUT else 0
-side_beta = int(input('鼻颞眼位 夹角[-30,+30]度:')) if INTERACTIVE_INPUT else -15
+side_alpha = float(input('俯仰眼位 夹角[-30,+30]度:')) if INTERACTIVE_INPUT else 0
+side_beta = float(input('鼻颞眼位 夹角[-30,+30]度:')) if INTERACTIVE_INPUT else -15
 
 hit_table = []
 block_table = []
 
-for lens_alpha in range(lens_alpha_min, lens_alpha_min + lens_alpha_range+1, lens_alpha_stride):
+for i in range(int(lens_alpha_range/lens_alpha_stride)+1):
+    lens_alpha = lens_alpha_min + i*lens_alpha_stride
     hit_row_beta = []
     block_row_beta = []
-    for lens_beta in range(lens_beta_min, lens_beta_min + lens_beta_range+1, lens_beta_stride):
-
+    for j in range(int(lens_beta_range/lens_beta_stride)+1):
+        lens_beta = lens_beta_min + j*lens_beta_stride
         # Calculate the eye rotation
         eye_alpha = lens_alpha+side_alpha
         eye_beta = lens_beta+side_beta
@@ -316,12 +317,15 @@ for lens_alpha in range(lens_alpha_min, lens_alpha_min + lens_alpha_range+1, len
 
         print('\n')
 
-        # if len(hits)>0:
-        print(f'镜片碰撞人头数/总人头数:{max(hits)}/{len(obj_list)}')
-        print(f'镜片碰撞几率:{np.around(float(max(hits))/53,4)*100}%')
-        print('\n')
+        if len(hits)>0:
+            print(f'镜片碰撞人头数/总人头数:{max(hits)}/{len(obj_list)}')
+            print(f'镜片碰撞几率:{np.around(float(max(hits))/53,4)*100}%')
+            print('\n')
 
-        hit_row_beta.append(f'{np.around(float(max(hits))/53,4)*100}%')
+            hit_row_beta.append(f'{np.around(float(max(hits))/53,4)*100}%')
+        else:
+            print('无碰撞')
+            hit_row_beta.append(f'0%')
             # intersection_multi_heads = trimesh.PointCloud(vertices=hit_voxels, colors=hit_colors_list)
             #
             # scene_voxel_intersection = trimesh.Scene()
@@ -345,13 +349,15 @@ for lens_alpha in range(lens_alpha_min, lens_alpha_min + lens_alpha_range+1, len
         #     print('无碰撞')
 
         if SHOW_LIGHT_BLOCK:
-            # if len(blocks)>0:
-            print(f'光路遮挡人头数/总人头数:{max(blocks)}/{len(obj_list)}')
-            print(f'光路遮挡几率:{np.around(float(max(blocks))/53,4)*100}%')
-            print('\n')
+            if len(blocks)>0:
+                print(f'光路遮挡人头数/总人头数:{max(blocks)}/{len(obj_list)}')
+                print(f'光路遮挡几率:{np.around(float(max(blocks))/53,4)*100}%')
+                print('\n')
 
-            block_row_beta.append(f'{np.around(float(max(blocks)) / 53, 4) * 100}%')
-
+                block_row_beta.append(f'{np.around(float(max(blocks)) / 53, 4) * 100}%')
+            else:
+                print('无遮挡')
+                block_row_beta.append(f'0%')
                 # intersection_multi_heads = trimesh.PointCloud(vertices=block_voxels, colors=block_colors_list)
                 #
                 # scene_voxel_intersection = trimesh.Scene()
@@ -386,15 +392,13 @@ summary = [f'工作距离（周边）:{working_distance} mm', f'目镜外框直�
 # Write column and row indices
 column_indices = []
 
-for lens_beta in range(lens_beta_min, lens_beta_min + lens_beta_range+1, lens_beta_stride):
-    column_indices.append(f'b={lens_beta}')
+for j in range(int(lens_beta_range/lens_beta_stride)+1):
+    column_indices.append(f'b={lens_beta_min + j*lens_beta_stride}')
 
 row_indices = []
 
-for lens_alpha in range(lens_alpha_min, lens_alpha_min + lens_alpha_range+1, lens_alpha_stride):
-    row_indices.append(f'a={lens_alpha}')
+for i in range(int(lens_alpha_range/lens_alpha_stride)+1):
+    row_indices.append(f'a={lens_alpha_min + i*lens_alpha_stride}')
 
 paraSweepTable(hit_table, './hit.xlsx', summary, column_indices, row_indices)
 paraSweepTable(block_table, './block.xlsx', summary, column_indices, row_indices)
-
-
