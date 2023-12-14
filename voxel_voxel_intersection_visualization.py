@@ -97,8 +97,15 @@ y_step = round((voxel_center_max[1] - voxel_center_min[1]) / PITCH + 1)
 
 
 def voxel2index(v):
-    return round((y_step * z_step * (v[0] - voxel_center_min[0]) + z_step * (v[1] - voxel_center_min[1]) + (
+    # set out-of-head-range indices as 0
+    if not (voxel_center_min[0] < v[0] < voxel_center_max[0] and
+            voxel_center_min[1] < v[1] < voxel_center_max[1] and
+            voxel_center_min[2] < v[2] < voxel_center_max[2]):
+        index = 0
+    else:
+        index = round((y_step * z_step * (v[0] - voxel_center_min[0]) + z_step * (v[1] - voxel_center_min[1]) + (
                 v[2] - voxel_center_min[2])) / PITCH)
+    return index
 
 head_voxel_list = voxel_list_remove_zero.tolist()
 head_voxel_indices = list(map(voxel2index, head_voxel_list))
@@ -284,6 +291,9 @@ for i in range(int(lens_alpha_range/lens_alpha_stride)+1):
             light_cone_list = light_cone_voxelization.tolist()
             light_cone_indices = list(map(voxel2index, light_cone_list))
 
+            # remove out-of-head-range indices which are invalid
+            light_cone_indices = [x for x in light_cone_indices if x != 0]
+
             elliptical_cylinder_list = elliptical_cylinder_voxelization.tolist()
             elliptical_cylinder_voxel_indices = list(map(voxel2index, elliptical_cylinder_list))
 
@@ -297,6 +307,9 @@ for i in range(int(lens_alpha_range/lens_alpha_stride)+1):
         # calculate lens hits
         lens_list = lens_voxelization.tolist()
         lens_indices = list(map(voxel2index, lens_list))
+
+        # remove out-of-head-range indices which are invalid
+        lens_indices = [x for x in lens_indices if x != 0]
 
         _, hit_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(lens_indices),return_indices=True)
 
