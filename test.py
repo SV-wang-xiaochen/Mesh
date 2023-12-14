@@ -1,8 +1,8 @@
 import trimesh
 import numpy as np
 import random
-PITCH = 0.01
-path = './2-6.obj'
+PITCH = 0.001
+path = './voxel_results/p1.obj'
 mesh = trimesh.load_mesh(path)
 mesh.apply_scale(0.001)
 
