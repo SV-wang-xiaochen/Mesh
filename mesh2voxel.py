@@ -166,5 +166,21 @@ np.save(f"accumulation_remove_zero_{PITCH}", accumulation_remove_zero)
 
 V = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=colors_list)
 
+def voxel2index(v):
+    # set out-of-head-range indices as 0
+    if not (voxel_center_min[0] < v[0] < voxel_center_max[0] and
+            voxel_center_min[1] < v[1] < voxel_center_max[1] and
+            voxel_center_min[2] < v[2] < voxel_center_max[2]):
+        index = 0
+    else:
+        index = round((y_step * z_step * (v[0] - voxel_center_min[0]) + z_step * (v[1] - voxel_center_min[1]) + (
+                v[2] - voxel_center_min[2])) / PITCH)
+    return index
+
+head_voxel_list = voxel_list_remove_zero.tolist()
+head_voxel_indices = list(map(voxel2index, head_voxel_list))
+
+np.save(f"head_voxel_indices_{PITCH}", head_voxel_indices)
+
 scene.add_geometry(V)
 scene.show(smooth=False, flags={'wireframe': False})
