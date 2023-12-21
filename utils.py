@@ -1,13 +1,13 @@
 import open3d as o3d
 import trimesh
-import glob
+import os
 import numpy as np
-# import matplotlib.pyplot as plt
-import copy
 import random
 import math
 import io
 import PIL.Image as Image
+import xlsxwriter
+
 
 def xyz_from_alpha_beta(alpha, beta):
     """ Find the destination coordinate of lens (x,y,z) after rotation defined by alpha and beta
@@ -159,3 +159,55 @@ def saveSceneImage(scene, path):
     image = Image.open(io.BytesIO(bytes_))
     image.save(path)
 
+
+def loadVoxelizationResults(pitch):
+    num_of_heads = np.load(f"voxel_results/num_of_heads_{pitch}.npy")
+    voxel_list_remove_zero = np.load(f"voxel_results/voxel_list_remove_zero_{pitch}.npy")
+    colors_list = np.load(f"voxel_results/colors_list_{pitch}.npy")
+    accumulation_remove_zero = np.load(f"voxel_results/accumulation_remove_zero_{pitch}.npy")
+    voxel_center_min = np.load(f"voxel_results/voxel_center_min_{pitch}.npy")
+    voxel_center_max = np.load(f"voxel_results/voxel_center_max_{pitch}.npy")
+    head_voxel_indices = np.load(f"voxel_results/head_voxel_indices_{pitch}.npy")
+
+    return num_of_heads, voxel_list_remove_zero, colors_list, accumulation_remove_zero, voxel_center_min, voxel_center_max, head_voxel_indices
+
+def createLensAndLightCone(lens_diameter, lens_thickness, cone_diameter, cone_angle, working_distance, eye_ball_shift):
+    light_cone_radius = cone_diameter / 2000
+    light_cone_height = light_cone_radius / math.tan(cone_angle / 2 / 180 * np.pi)
+    light_cone = trimesh.creation.cone(light_cone_radius, -light_cone_height)
+    light_cone.apply_translation([0, 0, working_distance / 1000 - eye_ball_shift[2]])
+
+    lens = trimesh.creation.cylinder(lens_diameter / 2000, lens_thickness / 1000)
+
+    return lens, light_cone, light_cone_height
+
+def paraSweepTable(result_table, xlsx_path, summary, column_indices, row_indices, header):
+    # Create a 2D NumPy array
+    array_2d = np.array(result_table)
+
+    # Create a new Excel file and add a worksheet
+    workbook = xlsxwriter.Workbook(xlsx_path)
+    worksheet = workbook.add_worksheet()
+
+    # Write the 2D NumPy array to the worksheet
+    for row_num, row_data in enumerate(array_2d):
+        for col_num, value in enumerate(row_data):
+            worksheet.write(row_num + 1, col_num + 1, value)
+
+    # Write column and row indices
+
+    for col_num, value in enumerate(np.array(column_indices)):
+        worksheet.write(0, col_num + 1, value)
+
+    for row_num, value in enumerate(np.array(row_indices)):
+        worksheet.write(row_num + 1, 0, value)
+
+    summary_start_row = len(row_indices) + 2
+
+    for row_num, item in enumerate(summary):
+        worksheet.write(summary_start_row + row_num, 0, item)
+
+    worksheet.write(0, 0, header)
+
+    # Close the workbook to save the changes
+    workbook.close()
