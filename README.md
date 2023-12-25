@@ -18,43 +18,21 @@
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
-
 
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+  <a href="https://github.com/SV-wang-xiaochen/Mesh">
+    <img src="images/logo.png" alt="Logo" width="160" height="200">
   </a>
-
-  <h3 align="center">Best-README-Template</h3>
-
-  <p align="center">
-    An awesome README template to jumpstart your projects!
-    <br />
-    <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/othneildrew/Best-README-Template">View Demo</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Request Feature</a>
-  </p>
+  <h3 align="center">头部模型碰撞遮挡模拟</h3>
 </div>
 
 
 
 <!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
+<!--<details>
+  <summary>目录</summary>
   <ol>
     <li>
       <a href="#about-the-project">About The Project</a>
@@ -77,45 +55,45 @@
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
-
+-->
 
 
 <!-- ABOUT THE PROJECT -->
-## About The Project
+## 关于本项目
+<div align="center">
+  <a href="https://github.com/SV-wang-xiaochen/Mesh">
+    <img src="images/overview.png" alt="Overview">
+  </a>
+</div>
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
-
-There are many great README templates available on GitHub; however, I didn't find one that really suited my needs so I created this enhanced one. I want to create a README template so amazing that it'll be the last one you ever need -- I think this is it.
-
-Here's why:
-* Your time should be focused on creating something amazing. A project that solves a problem and helps others
-* You shouldn't be doing the same tasks over and over like creating a README from scratch
-* You should implement DRY principles to the rest of your life :smile:
-
-Of course, no one template will serve all projects since your needs may be different. So I'll be adding more in the near future. You may also suggest changes by forking this repo and creating a pull request or opening an issue. Thanks to all the people have contributed to expanding this template!
-
-Use the `BLANK_README.md` to get started.
+  <p align="center">
+    模拟镜片、面板等任何Mesh模型与53个头部模型的物理碰撞、光路遮挡，输出碰撞/遮挡3D热力图、统计图表等，辅助设计光学系统。
+  </p>
+传统的碰撞、遮挡实验，只能通过机械方式来进行，十分不便。本项目利用Python程序精确模拟物理碰撞、光路遮挡，增加了便利性，提高研发效率。
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
-### Built With
-
-This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
-
-* [![Next][Next.js]][Next-url]
-* [![React][React.js]][React-url]
-* [![Vue][Vue.js]][Vue-url]
-* [![Angular][Angular.io]][Angular-url]
-* [![Svelte][Svelte.dev]][Svelte-url]
-* [![Laravel][Laravel.com]][Laravel-url]
-* [![Bootstrap][Bootstrap.com]][Bootstrap-url]
-* [![JQuery][JQuery.com]][JQuery-url]
-
+## 开发环境
+Python 3.10
+   ```sh
+   pip install -r requirements.txt 
+   ```
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+## 头部模型数据库
+[FLORENCE](https://www.micc.unifi.it/masi/research/ffd/)：53个欧洲人的头部模型
 
+### 模型对齐
+<div align="center">
+  <a href="https://github.com/SV-wang-xiaochen/Mesh">
+    <img src="images/xyz.png" alt="x-y-z"  width="300">
+    <img src="images/unaligned.png" alt="unaligned_head"  width="300">
+    <img src="images/aligned.png" alt="aligned_head" width="250">
+  </a>
+</div>
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- GETTING STARTED -->
 ## Getting Started
