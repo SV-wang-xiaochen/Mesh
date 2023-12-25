@@ -1,3 +1,8 @@
 # Default ignored files
 .idea
 results/
+voxel_results/
+mesh_results/
+build/
+dist/
+__pycache__/
