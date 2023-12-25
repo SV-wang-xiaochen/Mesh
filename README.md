@@ -120,7 +120,7 @@ trimesh
 具体实现方法见：
 https://github.com/SVisions/OCT-Product/issues/8784
 
-主要内容包括：Mesh模型封口、Mesh模型转Voxel模型、正侧眼位定义、俯仰角定义、内外旋角定义
+主要内容包括：Mesh模型封口、Mesh模型转Voxel模型、俯仰角定义、内外旋角定义、正侧眼位定义等
 
 遮挡模拟和碰撞模拟类似，只不过将镜片/面板模型改为光路圆锥。
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -140,10 +140,7 @@ https://github.com/SVisions/OCT-Product/issues/8784
    pyinstaller.exe -F PATH/voxel_voxel_intersection_visualization.py
    ```
    dist文件夹下会生成voxel_voxel_intersection_visualization.exe，将其和voxel_results文件夹放在同一个目录下，即可双击启动程序，根据prompt提示，选择工作模式、设置工作参数。
-   
-主要内容包括：Mesh模型封口、Mesh模型转Voxel模型、俯仰角定义、内外旋角定义、正侧眼位定义等
 
-遮挡模拟和碰撞模拟类似，只不过将镜片/面板模型改为光路圆锥。
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## 工作模式说明
