@@ -25,7 +25,7 @@
   <a href="https://github.com/SV-wang-xiaochen/Mesh">
     <img src="images/logo.png" alt="Logo" width="160" height="200">
   </a>
-  <h3 align="center">头部模型碰撞遮挡模拟</h3>
+  <h1 align="center">头部模型碰撞遮挡模拟</h1>
 </div>
 
 
@@ -77,6 +77,7 @@
 
 ## 开发环境
 Python 3.10
+trimesh
    ```sh
    pip install -r requirements.txt 
    ```
@@ -101,18 +102,24 @@ Python 3.10
 1) 使用o3d重新生成.obj文件：因为格式问题，在Meshlab中看到的顶点编号和trimesh导入后的编号不一致，所以先借助o3d重新生成.obj文件，可避免不一致的问题。
    ```sh
    python regenerate_obj_by_o3d.py
+   ```
 2) 按对齐原则对齐模型：中截面相互平行，中截面由脑门中线上的三个点确定（编号1203，1335，1726）；左眼前点（编号4043）坐标一致，为(0,0,0)；左眼眼轴，即左眼前点（编号4043）和后点（编号4463）的连线共面，且该面垂直于中截面
    ```sh
    python alignment.py
+   ```
 3) 以X轴整体向下旋转8度
    ```sh
    transform_head_mesh_aligned_v1.py
+   ```
 
 <!-- GETTING STARTED -->
-## Getting Started
+## 碰撞/遮挡模型的设计
+具体实现方法见：
+https://github.com/SVisions/OCT-Product/issues/8784
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+主要内容包括：Mesh模型封口、Mesh模型转Voxel模型、正侧眼位定义、俯仰角定义、内外旋角定义
+
+遮挡模拟和碰撞模拟类似，只不过将镜片/面板模型改为光路圆锥。
 
 ### Prerequisites
 
