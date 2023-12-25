@@ -88,12 +88,25 @@ Python 3.10
 ### 模型对齐
 <div align="center">
   <a href="https://github.com/SV-wang-xiaochen/Mesh">
-    <img src="images/xyz.png" alt="x-y-z"  width="300">
-    <img src="images/unaligned.png" alt="unaligned_head"  width="300">
-    <img src="images/aligned.png" alt="aligned_head" width="250">
+    <img src="images/xyz.png" alt="x-y-z"  width="250">
+    <img src="images/unaligned.png" alt="unaligned_head"  width="250">
+    <img src="images/aligned.png" alt="aligned_head" width="200">
+    <img src="images/rotate8degree.png" alt="rotate8degree" width="200">
   </a>
 </div>
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+3D坐标系X-Y-Z如图1所示。53个Mesh人头，每个人头由5023个点组成，各Mesh的相同编号的点一一对应。但53个人头的姿态不同（图2），需要先做对齐（图3）。对齐之后，所有人头以X轴整体向下旋转8度，因为人的自然视角不是平视的，而是向下8度的（图4）。
+
+步骤：
+1) 使用o3d重新生成.obj文件：因为格式问题，在Meshlab中看到的顶点编号和trimesh导入后的编号不一致，所以先借助o3d重新生成.obj文件，可避免不一致的问题。
+   ```sh
+   python regenerate_obj_by_o3d.py
+2) 按对齐原则对齐模型：中截面相互平行，中截面由脑门中线上的三个点确定（编号1203，1335，1726）；左眼前点（编号4043）坐标一致，为(0,0,0)；左眼眼轴，即左眼前点（编号4043）和后点（编号4463）的连线共面，且该面垂直于中截面
+   ```sh
+   python alignment.py
+3) 以X轴整体向下旋转8度
+   ```sh
+   transform_head_mesh_aligned_v1.py
 
 <!-- GETTING STARTED -->
 ## Getting Started
