@@ -22,12 +22,12 @@ def process_input(entries, root, next_window, run_mesh):
         root.destroy()
 
         # Open the next window for entering another set of parameters
-        next_window()
+        next_window(arg1)
 
     except ValueError:
         messagebox.showerror("Error", "Please enter valid values for all arguments.")
 
-def open_first_window():
+def open_first_window(arg1=None):  # Modified to accept an argument with a default value of None
     first_window = tk.Tk()
     first_window.title("First Set of Parameters")
 
@@ -38,15 +38,15 @@ def open_first_window():
     button_process = tk.Button(first_window, text="Process Input", command=lambda: process_input(entries, first_window, open_second_window, False))
     button_process.grid(row=2, column=0, columnspan=2, pady=10)
 
-def open_second_window():
+def open_second_window(arg1):
     second_window = tk.Tk()
     second_window.title("Second Set of Parameters")
 
     # Create input fields and get the entries dictionary for the second window
-    entries = create_second_window_input_fields(second_window)
+    entries = create_second_window_input_fields(second_window, arg1)
 
     # Create a button that calls the process_input function when clicked
-    button_process = tk.Button(second_window, text="Process Input", command=lambda: process_input(entries, second_window, open_first_window, True))
+    button_process = tk.Button(second_window, text="Process Input", command=lambda: process_input(entries, second_window, lambda arg1=arg1: open_first_window(arg1), True))
     button_process.grid(row=2, column=0, columnspan=2, pady=10)
 
 def create_first_window_input_fields(root):
@@ -71,16 +71,27 @@ def create_first_window_input_fields(root):
 
     return entries
 
-def create_second_window_input_fields(root):
+def create_second_window_input_fields(root, arg1):
     # Create a dictionary to store the entry widgets
     entries = {}
 
+    # Use arg1 to determine the number and labels for entry widgets
+    if arg1 == '1':
+        arg1_label_text = '面板模型文件名(无后缀):'
+        arg2_label_text = '工作距离(周边)[0,45]mm:'
+    elif arg1 == '2':
+        arg1_label_text = 'Another Argument Label:'
+        arg2_label_text = 'Yet Another Argument Label:'
+    else:
+        arg1_label_text = 'Default Argument Label 1:'
+        arg2_label_text = 'Default Argument Label 2:'
+
     # Create entry widgets for each argument
-    arg1_label = tk.Label(root, text='面板模型文件名(无后缀):')
+    arg1_label = tk.Label(root, text=arg1_label_text)
     arg1_entry = tk.Entry(root)
     entries['arg1'] = arg1_entry
 
-    arg2_label = tk.Label(root, text='工作距离(周边)[0,45]mm:')
+    arg2_label = tk.Label(root, text=arg2_label_text)
     arg2_entry = tk.Entry(root)
     entries['arg2'] = arg2_entry
 
@@ -98,4 +109,3 @@ open_first_window()
 
 # Start the Tkinter event loop
 tk.mainloop()
-
