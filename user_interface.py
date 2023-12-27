@@ -88,7 +88,7 @@ def create_second_window_input_fields(root, *args):
     for i, arg_text in enumerate(arg_label_text):
         arg_label = tk.Label(root, text=arg_text)
         arg_entry = tk.Entry(root)
-        entries['arg'] = arg_entry
+        entries['arg'+str(i)] = arg_entry
 
         # Position the widgets using the grid layout
         arg_label.grid(row=i, column=0, padx=5, pady=5, sticky="e")
