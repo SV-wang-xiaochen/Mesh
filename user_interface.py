@@ -3,7 +3,7 @@ from tkinter import messagebox
 
 INTERACTIVE_INPUT = True  # Set this to False if you want to use default values
 
-def process_input(entries, root, next_window, run_mesh):
+def process_input(entries, root, next_window, run_mesh, mode1, mode2):
     try:
         # Extract values from the entries
         args = [entry.get() for entry in entries.values()]
@@ -16,6 +16,7 @@ def process_input(entries, root, next_window, run_mesh):
 
         if run_mesh:
             # Additional code to run after processing the arguments
+            print(f"工作模式：{mode1},{mode2}")
             print("Running additional code...")
 
         # Destroy the root window (current window)
@@ -35,18 +36,18 @@ def open_first_window(*args):  # Modified to accept an argument with a default v
     entries = create_first_window_input_fields(first_window)
 
     # Create a button that calls the process_input function when clicked
-    button_process = tk.Button(first_window, text="Process Input", command=lambda: process_input(entries, first_window, open_second_window, False))
+    button_process = tk.Button(first_window, text="Process Input", command=lambda: process_input(entries, first_window, open_second_window, False, 0, 0))
     button_process.grid(row=2, column=0, columnspan=2, pady=10)
 
-def open_second_window(arg1, arg2):
+def open_second_window(mode1, mode2):
     second_window = tk.Tk()
     second_window.title("选择工作参数")
 
     # Create input fields and get the entries dictionary for the second window
-    entries = create_second_window_input_fields(second_window, arg1, arg2)
+    entries = create_second_window_input_fields(second_window, mode1, mode2)
 
     # Create a button that calls the process_input function when clicked
-    button_process = tk.Button(second_window, text="Process Input", command=lambda: process_input(entries, second_window, lambda *args: open_first_window(*args), True))
+    button_process = tk.Button(second_window, text="Process Input", command=lambda: process_input(entries, second_window, lambda *args: open_first_window(*args), True, mode1, mode2))
     button_process.grid(row=2, column=0, columnspan=2, pady=10)
 
 def create_first_window_input_fields(root):
