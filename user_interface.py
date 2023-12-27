@@ -6,12 +6,12 @@ INTERACTIVE_INPUT = True  # Set this to False if you want to use default values
 def process_input(entries, root, next_window, run_mesh):
     try:
         # Extract values from the entries
-        arg1 = entries['arg1'].get()
-        arg2 = entries['arg2'].get()
+        args = [entry.get() for entry in entries.values()]
 
         # Print or use the values
-        print("Argument 1:", arg1)
-        print("Argument 2:", arg2)
+        for i, arg in enumerate(args, start=1):
+            print(f"Argument {i}: {arg}")
+
         # Call your function or perform the desired operation with the inputs here
 
         if run_mesh:
@@ -22,14 +22,14 @@ def process_input(entries, root, next_window, run_mesh):
         root.destroy()
 
         # Open the next window for entering another set of parameters
-        next_window(arg1, arg2)
+        next_window(*args)
 
     except ValueError:
         messagebox.showerror("Error", "Please enter valid values for all arguments.")
 
-def open_first_window(arg1=None, arg2=None):  # Modified to accept an argument with a default value of None
+def open_first_window(*args):  # Modified to accept an argument with a default value of None
     first_window = tk.Tk()
-    first_window.title("First Set of Parameters")
+    first_window.title("选择工作模式")
 
     # Create input fields and get the entries dictionary for the first window
     entries = create_first_window_input_fields(first_window)
@@ -40,13 +40,13 @@ def open_first_window(arg1=None, arg2=None):  # Modified to accept an argument w
 
 def open_second_window(arg1, arg2):
     second_window = tk.Tk()
-    second_window.title("Second Set of Parameters")
+    second_window.title("选择工作参数")
 
     # Create input fields and get the entries dictionary for the second window
     entries = create_second_window_input_fields(second_window, arg1, arg2)
 
     # Create a button that calls the process_input function when clicked
-    button_process = tk.Button(second_window, text="Process Input", command=lambda: process_input(entries, second_window, lambda arg1 = '1', arg2 = '1': open_first_window(arg1, arg2), True))
+    button_process = tk.Button(second_window, text="Process Input", command=lambda: process_input(entries, second_window, lambda *args: open_first_window(*args), True))
     button_process.grid(row=2, column=0, columnspan=2, pady=10)
 
 def create_first_window_input_fields(root):
@@ -71,37 +71,28 @@ def create_first_window_input_fields(root):
 
     return entries
 
-def create_second_window_input_fields(root, arg1, arg2):
+def create_second_window_input_fields(root, *args):
     # Create a dictionary to store the entry widgets
     entries = {}
 
+
     # Use arg1 to determine the number and labels for entry widgets
-    if arg1 == '1':
-        arg1_label_text = '面板模型文件名(无后缀):'
-        arg2_label_text = '工作距离(周边)[0,45]mm:'
-    elif arg1 == '2':
-        arg1_label_text = 'Another Argument Label:'
-        arg2_label_text = 'Yet Another Argument Label:'
+    if args[0] == '1':
+        arg_label_text = ['面板模型文件名(无后缀):', '工作距离(周边)[0,45]mm:']
+    elif args[1] == '2':
+        arg_label_text = ['11面板模型文件名(无后缀):', '11工作距离(周边)[0,45]mm:']
     else:
-        arg1_label_text = 'Default Argument Label 1:'
-        arg2_label_text = 'Default Argument Label 2:'
+        arg_label_text = ['22面板模型文件名(无后缀):', '22工作距离(周边)[0,45]mm:']
 
-    # Create entry widgets for each argument
-    arg1_label = tk.Label(root, text=arg1_label_text)
-    arg1_entry = tk.Entry(root)
-    entries['arg1'] = arg1_entry
+    # Create entry widgets for each argument using a for loop
+    for i, arg_text in enumerate(arg_label_text):
+        arg_label = tk.Label(root, text=arg_text)
+        arg_entry = tk.Entry(root)
+        entries['arg'] = arg_entry
 
-    arg2_label = tk.Label(root, text=arg2_label_text)
-    arg2_entry = tk.Entry(root)
-    entries['arg2'] = arg2_entry
-
-    # Position the widgets using the grid layout
-    arg1_label.grid(row=0, column=0, padx=5, pady=5, sticky="e")
-    arg1_entry.grid(row=0, column=1, padx=5, pady=5)
-
-    arg2_label.grid(row=1, column=0, padx=5, pady=5, sticky="e")
-    arg2_entry.grid(row=1, column=1, padx=5, pady=5)
-
+        # Position the widgets using the grid layout
+        arg_label.grid(row=i, column=0, padx=5, pady=5, sticky="e")
+        arg_entry.grid(row=i, column=1, padx=5, pady=5)
     return entries
 
 # Open the first window
