@@ -1,6 +1,16 @@
 import tkinter as tk
 from tkinter import messagebox
 
+from enum import Enum
+
+class ResultMode(Enum):
+    Single = 1
+    Loop = 2
+
+class LensMode(Enum):
+    Lens = 1
+    FrontBoard = 2
+
 INTERACTIVE_INPUT = True  # Set this to False if you want to use default values
 
 def process_input(entries, arg_label_text, root, next_window, run_mesh, *previous_args):
@@ -13,22 +23,30 @@ def process_input(entries, arg_label_text, root, next_window, run_mesh, *previou
         for i, (text,value) in enumerate(zip(arg_label_text, args)):
             arg_dict.update({text:value})
             print(f"{text}: {value}")
-
+        print('\n')
         # Call your function or perform the desired operation with the inputs here
 
         if run_mesh:
-            if previous_args[1] == '2':
+            result_mode_int = int(previous_args[0])
+            lens_mode_int = int(previous_args[1])
+
+            result_mode = ResultMode(result_mode_int)
+            lens_mode = LensMode(lens_mode_int)
+
+            working_distance = arg_dict['工作距离(周边)[0,45]mm']
+
+            if lens_mode == LensMode.FrontBoard:
                 front_board_name = arg_dict['面板模型文件名(无后缀)']
-            if previous_args[1] == '1':
+            if lens_mode == LensMode.Lens:
                 lens_diameter = arg_dict['目镜外框直径[20,80]mm']
                 cone_diameter = arg_dict['通光孔径[20,80]mm']
                 cone_angle = arg_dict['单张范围（眼外角）[70,140]度']
-            if previous_args[0] == '1':
+            if result_mode == ResultMode.Single:
                 lens_alpha = arg_dict['机器俯仰角[-90,90]度(+仰,-俯)']
                 lens_beta = arg_dict['机器内外旋角[-90,90]度(+内旋,-外旋)']
                 eye_alpha = arg_dict['眼睛俯仰角[-90,90]度(+俯,-仰)']
                 eye_beta = arg_dict['眼睛内外旋角[-90,90]度(+外旋,-内旋)']
-            if previous_args[0] == '2':
+            if result_mode == ResultMode.Loop:
                 lens_alpha_min = arg_dict['机器俯仰角 最小值(+仰,-俯)']
                 lens_alpha_range = arg_dict['机器俯仰角 区间长度']
                 lens_alpha_stride = arg_dict['机器俯仰角 步进角度']
@@ -38,6 +56,7 @@ def process_input(entries, arg_label_text, root, next_window, run_mesh, *previou
                 side_alpha = arg_dict['俯仰眼位 夹角[-30,+30]度']
                 side_beta = arg_dict['鼻颞眼位 夹角[-30,+30]度']
 
+            print('\n')
             print("Running additional code...")
 
         # Destroy the root window (current window)
