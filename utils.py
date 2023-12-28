@@ -213,3 +213,15 @@ def paraSweepTable(result_table, xlsx_path, summary, column_indices, row_indices
 
     # Close the workbook to save the changes
     workbook.close()
+
+def voxel2index(v, voxel_center_min, voxel_center_max, y_step, z_step, pitch):
+    # set out-of-head-range indices as 0
+    if not (voxel_center_min[0] < v[0] < voxel_center_max[0] and
+            voxel_center_min[1] < v[1] < voxel_center_max[1] and
+            voxel_center_min[2] < v[2] < voxel_center_max[2]):
+        index = 0
+    else:
+        index = round((y_step * z_step * (v[0] - voxel_center_min[0]) + z_step * (v[1] - voxel_center_min[1]) + (
+                v[2] - voxel_center_min[2])) / pitch)
+    return index
+

@@ -1,6 +1,6 @@
 import trimesh
 import numpy as np
-from utils import bottom_vertex_index, mouth_vertex_index
+from utils import bottom_vertex_index, mouth_vertex_index, voxel2index
 import glob
 import random
 
@@ -54,17 +54,6 @@ voxel_list = voxel_grid.reshape(-1, 3).tolist()
 
 z_step = round((voxel_center_max[2]-voxel_center_min[2])/PITCH+1)
 y_step = round((voxel_center_max[1]-voxel_center_min[1])/PITCH+1)
-
-def voxel2index(v):
-    # set out-of-head-range indices as 0
-    if not (voxel_center_min[0] < v[0] < voxel_center_max[0] and
-            voxel_center_min[1] < v[1] < voxel_center_max[1] and
-            voxel_center_min[2] < v[2] < voxel_center_max[2]):
-        index = 0
-    else:
-        index = round((y_step * z_step * (v[0] - voxel_center_min[0]) + z_step * (v[1] - voxel_center_min[1]) + (
-                v[2] - voxel_center_min[2])) / PITCH)
-    return index
 
 accumulation = [0 for _ in range(len(voxel_list))]
 print('len(voxel_list)')
@@ -132,7 +121,7 @@ for mesh_nr in range(0, num_of_heads):
 
     head_occupancy = np.around(head_voxelization,4).tolist()
 
-    head_occupancy_index_list = list(filter(lambda x: x != 0, list(map(voxel2index, head_occupancy))))
+    head_occupancy_index_list = list(filter(lambda x: x != 0, list(map(lambda x: voxel2index(x, voxel_center_min, voxel_center_max, y_step, z_step, PITCH), head_occupancy))))
     print('head_occupancy_index_list')
     print(len(head_occupancy_index_list))
 
@@ -174,7 +163,7 @@ np.save(f"accumulation_remove_zero_{PITCH}", accumulation_remove_zero)
 V = trimesh.PointCloud(vertices=voxel_list_remove_zero, colors=colors_list)
 
 head_voxel_list = voxel_list_remove_zero
-head_voxel_indices = list(filter(lambda x: x != 0, list(map(voxel2index, head_voxel_list))))
+head_voxel_indices = list(filter(lambda x: x != 0, list(map(lambda x: voxel2index(x, voxel_center_min, voxel_center_max, y_step, z_step, PITCH), head_voxel_list))))
 
 np.save(f"head_voxel_indices_{PITCH}", head_voxel_indices)
 

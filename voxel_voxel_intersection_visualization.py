@@ -3,7 +3,7 @@ import glob
 import numpy as np
 from utils import xyz_from_alpha_beta, intersection_elements, generate_random_color, rotation_matrix_from_vectors,\
     angle_between_two_vectors, ellipsoid, trimesh2open3d, o3dTriangleMesh2PointCloud, createCircle, saveSceneImage,\
-    loadVoxelizationResults, createLensAndLightCone, paraSweepTable
+    loadVoxelizationResults, createLensAndLightCone, paraSweepTable, voxel2index
 from datetime import datetime
 import tkinter as tk
 from tkinter import messagebox
@@ -72,17 +72,6 @@ colors_list[accumulation_np>10] = [0, 0, 0, 1]
 
 z_step = round((voxel_center_max[2] - voxel_center_min[2]) / PITCH + 1)
 y_step = round((voxel_center_max[1] - voxel_center_min[1]) / PITCH + 1)
-
-def voxel2index(v):
-    # set out-of-head-range indices as 0
-    if not (voxel_center_min[0] < v[0] < voxel_center_max[0] and
-            voxel_center_min[1] < v[1] < voxel_center_max[1] and
-            voxel_center_min[2] < v[2] < voxel_center_max[2]):
-        index = 0
-    else:
-        index = round((y_step * z_step * (v[0] - voxel_center_min[0]) + z_step * (v[1] - voxel_center_min[1]) + (
-                v[2] - voxel_center_min[2])) / PITCH)
-    return index
 
 #######################  load a predefined elliptical cylinder where the light blocks should be ignored  #######################
 elliptical_cylinder_path = f'voxel_results/EllipticalCylinder.obj'
@@ -305,13 +294,13 @@ def process_input(entries, arg_label_text, root, next_window, run_mesh, *previou
                     if lens_mode == LensMode.Lens and SHOW_LIGHT_BLOCK:
                         # calculate light blocks
                         light_cone_list = light_cone_voxelization.tolist()
-                        light_cone_indices = list(filter(lambda x: x != 0, list(map(voxel2index, light_cone_list))))
+                        light_cone_indices = list(filter(lambda x: x != 0, list(map(lambda x: voxel2index(x, voxel_center_min, voxel_center_max, y_step, z_step, PITCH), light_cone_list))))
 
                         # remove out-of-head-range indices which are invalid
                         light_cone_indices = [x for x in light_cone_indices if x != 0]
 
                         elliptical_cylinder_list = elliptical_cylinder_voxelization.tolist()
-                        elliptical_cylinder_voxel_indices = list(filter(lambda x: x != 0, list(map(voxel2index, elliptical_cylinder_list))))
+                        elliptical_cylinder_voxel_indices = list(filter(lambda x: x != 0, list(map(lambda x: voxel2index(x, voxel_center_min, voxel_center_max, y_step, z_step, PITCH), elliptical_cylinder_list))))
 
                         valid_light_cone_indices = list(
                             np.setdiff1d(np.array(light_cone_indices), np.array(elliptical_cylinder_voxel_indices), True))
@@ -324,7 +313,7 @@ def process_input(entries, arg_label_text, root, next_window, run_mesh, *previou
 
                     # calculate lens hits
                     lens_list = lens_voxelization.tolist()
-                    lens_indices = list(filter(lambda x: x != 0, list(map(voxel2index, lens_list))))
+                    lens_indices = list(filter(lambda x: x != 0, list(map(lambda x: voxel2index(x, voxel_center_min, voxel_center_max, y_step, z_step, PITCH), lens_list))))
 
                     _, hit_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(lens_indices),
                                                        return_indices=True)
