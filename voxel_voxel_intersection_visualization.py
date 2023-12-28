@@ -305,13 +305,13 @@ def process_input(entries, arg_label_text, root, next_window, run_mesh, *previou
                     if lens_mode == LensMode.Lens and SHOW_LIGHT_BLOCK:
                         # calculate light blocks
                         light_cone_list = light_cone_voxelization.tolist()
-                        light_cone_indices = list(map(voxel2index, light_cone_list))
+                        light_cone_indices = list(filter(lambda x: x != 0, list(map(voxel2index, light_cone_list))))
 
                         # remove out-of-head-range indices which are invalid
                         light_cone_indices = [x for x in light_cone_indices if x != 0]
 
                         elliptical_cylinder_list = elliptical_cylinder_voxelization.tolist()
-                        elliptical_cylinder_voxel_indices = list(map(voxel2index, elliptical_cylinder_list))
+                        elliptical_cylinder_voxel_indices = list(filter(lambda x: x != 0, list(map(voxel2index, elliptical_cylinder_list))))
 
                         valid_light_cone_indices = list(
                             np.setdiff1d(np.array(light_cone_indices), np.array(elliptical_cylinder_voxel_indices), True))
@@ -324,7 +324,7 @@ def process_input(entries, arg_label_text, root, next_window, run_mesh, *previou
 
                     # calculate lens hits
                     lens_list = lens_voxelization.tolist()
-                    lens_indices = list(map(voxel2index, lens_list))
+                    lens_indices = list(filter(lambda x: x != 0, list(map(voxel2index, lens_list))))
 
                     _, hit_indices, _ = np.intersect1d(np.array(head_voxel_indices), np.array(lens_indices),
                                                        return_indices=True)
