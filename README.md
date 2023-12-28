@@ -104,15 +104,16 @@ trimesh
    ```sh
    python regenerate_obj_by_o3d.py
    ```
-2) 按对齐原则对齐模型：中截面相互平行，中截面由脑门中线上的三个点确定（编号1203，1335，1726）；左眼前点（编号4043）坐标一致，为(0,0,0)；左眼眼轴，即左眼前点（编号4043）和后点（编号4463）的连线共面，且该面垂直于中截面
+2) 按对齐原则对齐模型：中截面相互平行，中截面由脑门中线上的三个点确定（编号1203，1335，1726）；左眼前点（编号4043）坐标一致，为(0,0,0)；左眼眼轴，即左眼前点（编号4043）和后点（编号4463）的连线共面，且该面垂直于中截面。
    ```sh
    python alignment.py
    ```
-3) 以X轴整体向下旋转8度
+3) 以X轴整体向下旋转8度。
    ```sh
-   transform_head_mesh_aligned_v1.py
+   python transform_head_mesh_aligned_v1.py
    ```
-
+4) 处理好的obj模型需要放在voxel_results/FLORENCE/registrations文件夹下。
+   
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- GETTING STARTED -->
@@ -120,7 +121,7 @@ trimesh
 具体实现方法见：
 https://github.com/SVisions/OCT-Product/issues/8784
 
-主要内容包括：Mesh模型封口、Mesh模型转Voxel模型、俯仰角定义、内外旋角定义、正侧眼位定义、热力图颜色定义等
+主要内容包括：Mesh模型封口、Mesh模型转Voxel模型、俯仰角定义、内外旋角定义、正侧眼位定义、热力图颜色定义等。
 
 遮挡模拟和碰撞模拟类似，只不过将镜片/面板模型改为光路圆锥。
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -131,7 +132,7 @@ https://github.com/SVisions/OCT-Product/issues/8784
    python mesh2voxel.py
    ```
    
-2) 将生成的所有npy文件和对齐的obj头模文件，全部放入voxel_results文件夹下
+2) 将生成的所有npy文件，全部放入voxel_results文件夹下。注：对于“镜片碰撞/遮挡”工作模式，需要放置一个EllipticalCylinder.obj文件到voxel_results文件夹下，用于抠掉眼皮附近区域。
 3) Python开发环境中，使用碰撞/遮挡模型:
    ```sh
    python voxel_voxel_intersection_visualization.py
