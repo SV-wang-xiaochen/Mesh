@@ -1,7 +1,11 @@
 # Default ignored files
 .idea
 results/
-voxel_results/
+voxel_results/*
+!voxel_results/p1.obj
+!voxel_results/p2.obj
+!voxel_results/p3.obj
+!voxel_results/EllipticalCylinder.obj
 mesh_results/
 build/
 dist/
