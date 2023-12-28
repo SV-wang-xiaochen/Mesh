@@ -2,6 +2,7 @@
 .idea
 results/
 voxel_results/*
+!voxel_results/FLORENCE
 !voxel_results/p1.obj
 !voxel_results/p2.obj
 !voxel_results/p3.obj
