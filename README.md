@@ -66,9 +66,9 @@
   </a>
 </div>
 
-  <p align="center">
-    模拟镜片、面板等任何Mesh模型与53个头部模型的物理碰撞、光路遮挡，输出碰撞/遮挡3D热力图、统计图表等，辅助设计光学系统。
-  </p>
+
+模拟镜片、面板等任何Mesh模型与53个头部模型的物理碰撞、光路遮挡，输出碰撞/遮挡3D热力图、统计图表等，辅助设计光学系统。
+    
 传统的碰撞、遮挡实验，只能通过机械方式来进行，十分不便。本项目利用Python程序精确模拟物理碰撞、光路遮挡，增加了便利性，提高研发效率。
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -120,7 +120,7 @@ trimesh
 具体实现方法见：
 https://github.com/SVisions/OCT-Product/issues/8784
 
-主要内容包括：Mesh模型封口、Mesh模型转Voxel模型、俯仰角定义、内外旋角定义、正侧眼位定义等
+主要内容包括：Mesh模型封口、Mesh模型转Voxel模型、俯仰角定义、内外旋角定义、正侧眼位定义、热力图颜色定义等
 
 遮挡模拟和碰撞模拟类似，只不过将镜片/面板模型改为光路圆锥。
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -131,22 +131,43 @@ https://github.com/SVisions/OCT-Product/issues/8784
    python mesh2voxel.py
    ```
 2) 将生成的所有npy文件和对齐的obj头模文件，全部放入voxel_results文件夹下
-3) Debug模式使用碰撞/遮挡模型：在voxel_voxel_intersection_visualization.py中，将INTERACTIVE_INPUT设置为False，根据comment，设置好所有参数（工作模式、工作参数等等）
+3) Python开发环境中，使用碰撞/遮挡模型:
    ```sh
    python voxel_voxel_intersection_visualization.py
    ```
-4) 打包为exe使用碰撞/遮挡模型：在voxel_voxel_intersection_visualization.py中，将INTERACTIVE_INPUT设置为True，不用设置其他参数
+   
+   程序启动后，弹出“输入工作模式”界面：
+<div align="center">
+  <a href="https://github.com/SV-wang-xiaochen/Mesh">
+    <img src="images/UI1.png" alt="x-y-z"  width="300">
+  </a>
+</div>
+   
+   输入参数，点击确认后，弹出“输入工作参数”界面：
+<div align="center">
+  <a href="https://github.com/SV-wang-xiaochen/Mesh">
+    <img src="images/UI2.png" alt="x-y-z"  width="300">
+  </a>
+</div>
+   
+   输入参数，点击确认后，等待程序输出结果（3D图、表格、打印log）。注：对于弹出的3D图，需要关闭当前图后，才会弹出后续图：
+<div align="center">
+  <a href="https://github.com/SV-wang-xiaochen/Mesh">
+    <img src="images/log.png" alt="x-y-z"  width="500">
+  </a>
+</div>   
+5) 打包为exe，使用碰撞/遮挡模型：
    ```sh
    pyinstaller.exe -F PATH/voxel_voxel_intersection_visualization.py
    ```
-   dist文件夹下会生成voxel_voxel_intersection_visualization.exe，将其和voxel_results文件夹放在同一个目录下，即可双击启动程序，根据prompt提示，选择工作模式、设置工作参数。
+   dist文件夹下会生成voxel_voxel_intersection_visualization.exe，将其和voxel_results文件夹放在同一个目录下，即可双击启动程序。
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## 工作模式说明
 实验结果模式选择：
-1) 单组参数：对所有工作参数设置一组数值，生成一组碰撞/遮挡热力图，打印一组碰撞/遮挡概率结果
-2) 遍历参数：对机械俯仰角、机械内外旋角设置遍历范围，对其他工作参数设置一组数值，生成碰撞/遮挡概率excel表格
+1) 单组参数：对所有工作参数设置一组数值，生成一组碰撞/遮挡热力图（含若干幅3D图），打印一组碰撞/遮挡概率结果
+2) 遍历参数：对机械俯仰角、机械内外旋角设置遍历范围，对其他工作参数设置一组数值，生成碰撞/遮挡概率excel表格，不生成任何3D图
 
 机械模式选择：
 1) 镜片碰撞/遮挡：机械模型为镜片，通过设置参数，实时生成镜片Mesh
