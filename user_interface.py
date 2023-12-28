@@ -28,7 +28,7 @@ def process_input(entries, root, next_window, run_mesh, mode1, mode2):
     except ValueError:
         messagebox.showerror("Error", "Please enter valid values for all arguments.")
 
-def open_first_window(*args):  # Modified to accept an argument with a default value of None
+def open_first_window(*args):
     first_window = tk.Tk()
     first_window.title("选择工作模式")
 
@@ -39,15 +39,15 @@ def open_first_window(*args):  # Modified to accept an argument with a default v
     button_process = tk.Button(first_window, text="Process Input", command=lambda: process_input(entries, first_window, open_second_window, False, 0, 0))
     button_process.grid(row=2, column=0, columnspan=2, pady=10)
 
-def open_second_window(mode1, mode2):
+def open_second_window(*args):
     second_window = tk.Tk()
     second_window.title("选择工作参数")
 
     # Create input fields and get the entries dictionary for the second window
-    entries = create_second_window_input_fields(second_window, mode1, mode2)
+    entries = create_second_window_input_fields(second_window, *args)
 
     # Create a button that calls the process_input function when clicked
-    button_process = tk.Button(second_window, text="Process Input", command=lambda: process_input(entries, second_window, lambda *args: open_first_window(*args), True, mode1, mode2))
+    button_process = tk.Button(second_window, text="Process Input", command=lambda: process_input(entries, second_window, lambda *args: open_first_window(*args), True, *args))
     button_process.grid(row=2, column=0, columnspan=2, pady=10)
 
 def create_first_window_input_fields(root):
