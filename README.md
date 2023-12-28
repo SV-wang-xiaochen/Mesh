@@ -133,7 +133,7 @@ https://github.com/SVisions/OCT-Product/issues/8784
    ```
    
 2) 将生成的所有npy文件，全部放入voxel_results文件夹下。注：对于“镜片碰撞/遮挡”工作模式，需要放置一个EllipticalCylinder.obj文件到voxel_results文件夹下，用于抠掉眼皮附近区域。
-3) Python开发环境中，使用碰撞/遮挡模型:
+3) Python开发环境中使用:
    ```sh
    python voxel_voxel_intersection_visualization.py
    ```
@@ -152,13 +152,13 @@ https://github.com/SVisions/OCT-Product/issues/8784
       </a>
     </div>
        
-   输入参数，点击确认后，等待程序输出结果（3D图、表格、打印log）。注：对于弹出的3D图，需要关闭当前图后，才会弹出后续图：
+   输入参数，点击确认后，等待程序输出3D图、表格、打印log(如下图)。注：对于弹出的3D图，需要关闭当前3D图后，才会弹出后续3D图。
     <div align="center">
       <a href="https://github.com/SV-wang-xiaochen/Mesh">
         <img src="images/log.png" alt="x-y-z"  width="500">
       </a>
     </div>   
-4) 打包为exe，使用碰撞/遮挡模型：
+4) 打包为exe使用：
    ```sh
    pyinstaller.exe -F PATH/voxel_voxel_intersection_visualization.py
    ```
