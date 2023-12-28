@@ -130,6 +130,7 @@ https://github.com/SVisions/OCT-Product/issues/8784
    ```sh
    python mesh2voxel.py
    ```
+   
 2) 将生成的所有npy文件和对齐的obj头模文件，全部放入voxel_results文件夹下
 3) Python开发环境中，使用碰撞/遮挡模型:
    ```sh
@@ -137,26 +138,26 @@ https://github.com/SVisions/OCT-Product/issues/8784
    ```
    
    程序启动后，弹出“输入工作模式”界面：
-<div align="center">
-  <a href="https://github.com/SV-wang-xiaochen/Mesh">
-    <img src="images/UI1.png" alt="x-y-z"  width="300">
-  </a>
-</div>
-   
+    <div align="center">
+      <a href="https://github.com/SV-wang-xiaochen/Mesh">
+        <img src="images/UI1.png" alt="x-y-z"  width="300">
+      </a>
+    </div>
+       
    输入参数，点击确认后，弹出“输入工作参数”界面：
-<div align="center">
-  <a href="https://github.com/SV-wang-xiaochen/Mesh">
-    <img src="images/UI2.png" alt="x-y-z"  width="300">
-  </a>
-</div>
-   
+    <div align="center">
+      <a href="https://github.com/SV-wang-xiaochen/Mesh">
+        <img src="images/UI2.png" alt="x-y-z"  width="300">
+      </a>
+    </div>
+       
    输入参数，点击确认后，等待程序输出结果（3D图、表格、打印log）。注：对于弹出的3D图，需要关闭当前图后，才会弹出后续图：
-<div align="center">
-  <a href="https://github.com/SV-wang-xiaochen/Mesh">
-    <img src="images/log.png" alt="x-y-z"  width="500">
-  </a>
-</div>   
-5) 打包为exe，使用碰撞/遮挡模型：
+    <div align="center">
+      <a href="https://github.com/SV-wang-xiaochen/Mesh">
+        <img src="images/log.png" alt="x-y-z"  width="500">
+      </a>
+    </div>   
+4) 打包为exe，使用碰撞/遮挡模型：
    ```sh
    pyinstaller.exe -F PATH/voxel_voxel_intersection_visualization.py
    ```
