@@ -1,7 +1,6 @@
 import trimesh
 import numpy as np
-from bottom_vertex_index import bottom_vertex_index
-from mouth_vertex_index import mouth_vertex_index
+from utils import bottom_vertex_index, mouth_vertex_index
 import glob
 import random
 
@@ -26,13 +25,13 @@ MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 
 num_of_heads = 53
-path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
+path = './voxel_results/FLORENCE'
 obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 scene = trimesh.Scene()
 
 PITCH = 0.0004
-voxel_center_min = np.array([-0.0372, -0.0728, -0.0132])
-voxel_center_max = np.array([0.036, 0.0296, 0.0596])
+voxel_center_min = np.array([-0.0520, -0.1500, -0.0132])
+voxel_center_max = np.array([0.0520, 0.0520, 0.0720])
 
 # Define the pitch
 pitch = np.array([PITCH, PITCH, PITCH])
@@ -177,7 +176,7 @@ def voxel2index(v):
                 v[2] - voxel_center_min[2])) / PITCH)
     return index
 
-head_voxel_list = voxel_list_remove_zero.tolist()
+head_voxel_list = voxel_list_remove_zero
 head_voxel_indices = list(map(voxel2index, head_voxel_list))
 
 np.save(f"head_voxel_indices_{PITCH}", head_voxel_indices)

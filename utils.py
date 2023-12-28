@@ -8,6 +8,8 @@ import io
 import PIL.Image as Image
 import xlsxwriter
 
+bottom_vertex_index = [2288, 3510, 3532, 3533, 3534, 3535, 3536, 3538, 3540, 3553, 3554, 3555, 3557, 3567, 3568, 3690, 3691, 3693, 3718, 3720, 3721, 3736, 3737, 3738, 3740, 3741, 3744, 3749, 3750, 5016]
+mouth_vertex_index = [3011,3013,3017,3018,3037,2994,3053,3055,1639,1592,1591,1559,1567,1558,1531,1526,1552,1554,1598,1606,1629,1628,1637,958,957,3140,3095,3085,3081,3069,3061,2890]
 
 def xyz_from_alpha_beta(alpha, beta):
     """ Find the destination coordinate of lens (x,y,z) after rotation defined by alpha and beta

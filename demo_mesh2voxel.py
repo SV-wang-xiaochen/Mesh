@@ -1,7 +1,6 @@
 import trimesh
 import numpy as np
-from bottom_vertex_index import bottom_vertex_index
-from mouth_vertex_index import mouth_vertex_index
+from utils import bottom_vertex_index, mouth_vertex_index
 import glob
 import random
 
@@ -25,8 +24,8 @@ Head3 = 1203
 MOUTH_ABOVE = 825
 BROW_ABOVE = 2295
 
-num_of_heads = 1
-path = r'C:\Users\xiaochen.wang\Projects\Dataset\FLORENCE'
+num_of_heads = 10
+path = './voxel_results/FLORENCE'
 obj_list = glob.glob(f'{path}/**/*.obj', recursive=True)
 scene = trimesh.Scene()
 
