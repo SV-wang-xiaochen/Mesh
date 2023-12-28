@@ -78,16 +78,20 @@
 ## 开发环境
 Python 3.10
 
-trimesh
+[trimesh](https://trimesh.org/)
+
    ```sh
    pip install -r requirements.txt 
    ```
+安装软件: MeshLab(用于Mesh预览), Blender(trimesh的某些功能依赖Blender)
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## 头部模型数据库
 [FLORENCE](https://www.micc.unifi.it/masi/research/ffd/)：53个欧洲人的头部模型
 
 ### 模型对齐
+
+voxel_results文件夹下已经放置了处理过的FLORENCE数据库，可以直接用于碰撞/遮挡模拟。如果使用原始的FLORENCE数据库，请做以下处理。
 <div align="center">
   <a href="https://github.com/SV-wang-xiaochen/Mesh">
     <img src="images/xyz.png" alt="x-y-z"  width="250">
@@ -99,7 +103,7 @@ trimesh
 
 3D坐标系X-Y-Z如图1所示。53个Mesh人头，每个人头由5023个点组成，各Mesh的相同编号的点一一对应。但53个人头的姿态不同（图2），需要先做对齐（图3）。对齐之后，所有人头以X轴整体向下旋转8度，因为人的自然视角不是平视的，而是向下8度的（图4）。
 
-voxel_results文件夹下已经放置了处理好的FLORENCE数据库，可以跳过对齐步骤。如果使用原始的FLORENCE数据库，请按以下步骤对齐：
+步骤:
 1) 重新生成.obj文件：因为格式问题，在Meshlab中看到的顶点编号和trimesh导入后的编号不一致，所以先借助o3d重新生成.obj文件，可避免不一致的问题。
    ```sh
    python regenerate_obj_by_o3d.py
@@ -127,13 +131,14 @@ https://github.com/SVisions/OCT-Product/issues/8784
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## 碰撞/遮挡模型的使用
-1) 生成头部模型的voxel文件，其中可以调整voxel尺寸大小和voxel空间的有效范围。<br/> voxel尺寸越小，模型越精确，但计算越慢，目前使用的voxel最小尺寸是0.4mm。<br/>voxel空间有效范围需要包含可能发生碰撞/遮挡的区域（即左脸的前表面），在此基础上，有效范围越小，计算越快：
+1) mesh转为voxel: 生成头部模型的voxel文件和必要的参数文件，其中可以调整voxel尺寸大小和voxel空间的有效范围。<br/> voxel尺寸越小，模型越精确，但计算越慢，目前使用的voxel最小尺寸是0.4mm。<br/>voxel空间有效范围需要包含可能发生碰撞/遮挡的区域（即头部模型左半部分的前表面），在此基础上，有效范围越小，计算越快：
    ```sh
    python mesh2voxel.py
    ```
    
 2) 将生成的所有npy文件，全部放入voxel_results文件夹下。<br/>注：对于“镜片碰撞/遮挡”工作模式，需要放置预制的EllipticalCylinder.obj文件到voxel_results文件夹下，用于抠掉眼皮附近区域。
-3) Python开发环境中使用:
+3) 启动程序:
+   #### 方法1: Python开发环境
    ```sh
    python voxel_voxel_intersection_visualization.py
    ```
@@ -158,9 +163,10 @@ https://github.com/SVisions/OCT-Product/issues/8784
         <img src="images/log.png" alt="x-y-z"  width="500">
       </a>
     </div>   
-4) 打包为exe使用：
+    
+   #### 方法2: 打包为exe
    ```sh
-   pyinstaller.exe -F PATH/voxel_voxel_intersection_visualization.py
+   pyinstaller.exe -F [CURRENT_PATH]/voxel_voxel_intersection_visualization.py
    ```
    dist文件夹下会生成voxel_voxel_intersection_visualization.exe，将其和voxel_results文件夹放在同一个目录下，即可双击启动程序。<br/>"voxel_voxel_intersection_visualization.exe+voxel_results文件夹"可脱离Python开发环境使用，可以在其他Windows电脑运行。
 
@@ -172,7 +178,7 @@ https://github.com/SVisions/OCT-Product/issues/8784
 2) 遍历参数：对机械俯仰角、机械内外旋角设置遍历范围，对其他工作参数设置一组数值，生成碰撞/遮挡概率excel表格，不生成任何3D图
 
 机械模式选择：
-1) 镜片碰撞/遮挡：机械模型为镜片，通过设置参数，实时生成镜片Mesh
-2) 面板碰撞：机械模型为预制的前面板obj文件，存放在voxel_results文件夹下，在“输入工作参数”界面，输入文件名进行导入。比如，想使用p1.obj面板文件，则输入p1。面板格式要求：面板竖直放置，正对Z轴，镜头前表面中心点为(0,0,0)
+1) 镜片碰撞/遮挡：机械模型为镜片，通过设置参数，实时生成镜片mesh
+2) 面板碰撞：机械模型为预制的前面板mesh，文件格式为obj，存放在voxel_results文件夹下，在“输入工作参数”界面，输入文件名进行导入。比如，想使用p1.obj面板文件，则输入p1。<br/>面板格式要求：面板竖直放置，正对Z轴; 镜头前表面中心点为(0,0,0); 尽可能切掉与碰撞无关的部分，以加快计算速度。
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
