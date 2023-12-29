@@ -9,6 +9,27 @@ import tkinter as tk
 from tkinter import messagebox
 from enum import Enum
 
+# define input fields of working parameters in UI
+input_fields = {
+    "working_distance": "工作距离(周边)[0,45]mm",
+    "front_board_name": "面板模型文件名(无后缀)",
+    "lens_diameter": "目镜外框直径[20,80]mm",
+    "cone_diameter": "通光孔径[20,80]mm",
+    "cone_angle": "单张范围（眼外角）[70,140]度",
+    "lens_alpha": "机器俯仰角[-90,90]度(+仰,-俯)",
+    "lens_beta": "机器内外旋角[-90,90]度(+内旋,-外旋)",
+    "eye_alpha": "眼睛俯仰角[-90,90]度(+俯,-仰)",
+    "eye_beta": "眼睛内外旋角[-90,90]度(+外旋,-内旋)",
+    "lens_alpha_min": "机器俯仰角 最小值(+仰,-俯)",
+    "lens_alpha_range": "机器俯仰角 区间长度",
+    "lens_alpha_stride": "机器俯仰角 步进角度",
+    "lens_beta_min": "机器内外旋角 最小值(+内旋,-外旋)",
+    "lens_beta_range": "机器内外旋角 区间长度",
+    "lens_beta_stride": "机器内外旋角 步进角度",
+    "side_alpha": "俯仰眼位 夹角[-30,+30]度",
+    "side_beta": "鼻颞眼位 夹角[-30,+30]度"
+}
+
 class ResultMode(Enum):
     Single = 1
     Loop = 2
@@ -102,28 +123,28 @@ def process_input(entries, arg_label_text, root, next_window, run_mesh, *previou
             result_mode = ResultMode(result_mode_int)
             lens_mode = LensMode(lens_mode_int)
 
-            working_distance = float(arg_dict['工作距离(周边)[0,45]mm'])
+            working_distance = float(arg_dict[input_fields['working_distance']])
 
             if lens_mode == LensMode.FrontBoard:
-                front_board_name = arg_dict['面板模型文件名(无后缀)']
+                front_board_name = arg_dict[input_fields['front_board_name']]
             if lens_mode == LensMode.Lens:
-                lens_diameter = float(arg_dict['目镜外框直径[20,80]mm'])
-                cone_diameter = float(arg_dict['通光孔径[20,80]mm'])
-                cone_angle = float(arg_dict['单张范围（眼外角）[70,140]度'])
+                lens_diameter = float(arg_dict[input_fields['lens_diameter']])
+                cone_diameter = float(arg_dict[input_fields['cone_diameter']])
+                cone_angle = float(arg_dict[input_fields['cone_angle']])
             if result_mode == ResultMode.Single:
-                lens_alpha = float(arg_dict['机器俯仰角[-90,90]度(+仰,-俯)'])
-                lens_beta = float(arg_dict['机器内外旋角[-90,90]度(+内旋,-外旋)'])
-                eye_alpha = float(arg_dict['眼睛俯仰角[-90,90]度(+俯,-仰)'])
-                eye_beta = float(arg_dict['眼睛内外旋角[-90,90]度(+外旋,-内旋)'])
+                lens_alpha = float(arg_dict[input_fields['lens_alpha']])
+                lens_beta = float(arg_dict[input_fields['lens_beta']])
+                eye_alpha = float(arg_dict[input_fields['eye_alpha']])
+                eye_beta = float(arg_dict[input_fields['eye_beta']])
             if result_mode == ResultMode.Loop:
-                lens_alpha_min = float(arg_dict['机器俯仰角 最小值(+仰,-俯)'])
-                lens_alpha_range = float(arg_dict['机器俯仰角 区间长度'])
-                lens_alpha_stride = float(arg_dict['机器俯仰角 步进角度'])
-                lens_beta_min = float(arg_dict['机器内外旋角 最小值(+内旋,-外旋)'])
-                lens_beta_range = float(arg_dict['机器内外旋角 区间长度'])
-                lens_beta_stride = float(arg_dict['机器内外旋角 步进角度'])
-                side_alpha = float(arg_dict['俯仰眼位 夹角[-30,+30]度'])
-                side_beta = float(arg_dict['鼻颞眼位 夹角[-30,+30]度'])
+                lens_alpha_min = float(arg_dict[input_fields['lens_alpha_min']])
+                lens_alpha_range = float(arg_dict[input_fields['lens_alpha_range']])
+                lens_alpha_stride = float(arg_dict[input_fields['lens_alpha_stride']])
+                lens_beta_min = float(arg_dict[input_fields['lens_beta_min']])
+                lens_beta_range = float(arg_dict[input_fields['lens_beta_range']])
+                lens_beta_stride = float(arg_dict[input_fields['lens_beta_stride']])
+                side_alpha = float(arg_dict[input_fields['side_alpha']])
+                side_beta = float(arg_dict[input_fields['side_beta']])
                 hit_table = []
                 block_table = []
 
@@ -488,30 +509,30 @@ def create_second_window_input_fields(root, *args):
     # Create a dictionary to store the entry widgets
     entries = {}
 
-    arg_label_text = ['工作距离(周边)[0,45]mm']
+    arg_label_text = [input_fields['working_distance']]
 
     # Use arg1 to determine the number and labels for entry widgets
     if args[1] == '2':
-        arg_label_text.append('面板模型文件名(无后缀)')
+        arg_label_text.append(input_fields['front_board_name'])
     if args[1] == '1':
-        arg_label_text.append('目镜外框直径[20,80]mm')
-        arg_label_text.append('通光孔径[20,80]mm')
-        arg_label_text.append('单张范围（眼外角）[70,140]度')
+        arg_label_text.append(input_fields['lens_diameter'])
+        arg_label_text.append(input_fields['cone_diameter'])
+        arg_label_text.append(input_fields['cone_angle'])
 
     if args[0] == '1':
-        arg_label_text.append('机器俯仰角[-90,90]度(+仰,-俯)')
-        arg_label_text.append('机器内外旋角[-90,90]度(+内旋,-外旋)')
-        arg_label_text.append('眼睛俯仰角[-90,90]度(+俯,-仰)')
-        arg_label_text.append('眼睛内外旋角[-90,90]度(+外旋,-内旋)')
+        arg_label_text.append(input_fields['lens_alpha'])
+        arg_label_text.append(input_fields['lens_beta'])
+        arg_label_text.append(input_fields['eye_alpha'])
+        arg_label_text.append(input_fields['eye_beta'])
     if args[0] == '2':
-        arg_label_text.append('机器俯仰角 最小值(+仰,-俯)')
-        arg_label_text.append('机器俯仰角 区间长度')
-        arg_label_text.append('机器俯仰角 步进角度')
-        arg_label_text.append('机器内外旋角 最小值(+内旋,-外旋)')
-        arg_label_text.append('机器内外旋角 区间长度')
-        arg_label_text.append('机器内外旋角 步进角度')
-        arg_label_text.append('俯仰眼位 夹角[-30,+30]度')
-        arg_label_text.append('鼻颞眼位 夹角[-30,+30]度')
+        arg_label_text.append(input_fields['lens_alpha_min'])
+        arg_label_text.append(input_fields['lens_alpha_range'])
+        arg_label_text.append(input_fields['lens_alpha_stride'])
+        arg_label_text.append(input_fields['lens_beta_min'])
+        arg_label_text.append(input_fields['lens_beta_range'])
+        arg_label_text.append(input_fields['lens_beta_stride'])
+        arg_label_text.append(input_fields['side_alpha'])
+        arg_label_text.append(input_fields['side_beta'])
 
     # Create entry widgets for each argument using a for loop
     for i, arg_text in enumerate(arg_label_text):
